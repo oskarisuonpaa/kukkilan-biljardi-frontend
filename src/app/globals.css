@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/preflight" layer(base);
+@import "tailwindcss/utilities" layer(utilities);
 
 :root {
   --background: #ffffff;
@@ -20,7 +23,10 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply antialiased max-w-screen mx-auto bg-black text-white;
+}
+
+main {
+  min-height: calc(100vh - 60px);
+  @apply p-8 max-w-4xl mx-auto;
 }
