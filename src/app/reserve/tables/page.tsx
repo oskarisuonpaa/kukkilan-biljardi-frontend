@@ -1,13 +1,9 @@
-interface ReserveTableDetailPageProps {
-  params: { slug: string };
-}
-
-const ReserveTableDetailPage = ({ params }: ReserveTableDetailPageProps) => {
+const ReserveTablePage = () => {
   return (
     <main>
-      <h1>Reserve Table: {params.slug}</h1>
+      <h1>Reserve Table Page</h1>
     </main>
   );
 };
 
-export default ReserveTableDetailPage;
+export default ReserveTablePage;

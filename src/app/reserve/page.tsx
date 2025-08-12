@@ -16,9 +16,12 @@ const ReserveLandingPage = () => {
           </Link>
           .
         </p>
-        <button className="bg-blue-500 text-white p-2 rounded">
+        <Link
+          className="bg-blue-500 text-white p-2 rounded"
+          href="/reserve/tables"
+        >
           Reserve Now
-        </button>
+        </Link>
       </section>
       {/*Noticeboard */}
       <section className="bg-gray-600 rounded-lg p-4 mb-4">
