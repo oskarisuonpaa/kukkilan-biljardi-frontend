@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const TableCard = ({ id, tableName }: { id: number; tableName: string }) => {
+type TableCardProps = {
+  id: number;
+  tableName: string;
+};
+
+const TableCard = ({ id, tableName }: TableCardProps) => {
   return (
     <div className="bg-gray-600 rounded-lg p-4">
       <h2 className="text-lg font-semibold mb-4 text-center">{tableName}</h2>
@@ -18,13 +23,13 @@ const TableCard = ({ id, tableName }: { id: number; tableName: string }) => {
   );
 };
 
-interface Table {
+type Table = {
   id: number;
   name: string;
   active: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
 const ReserveTablePage = () => {
   const [tables, setTables] = useState<Table[]>([]);
