@@ -1,7 +1,9 @@
 const ReserveLandingPage = () => {
   return (
     <main>
-      <h1>Reservation Page</h1>
+      {/*Booking Link */}
+      {/*Noticeboard */}
+      {/*Info */}
     </main>
   );
 };

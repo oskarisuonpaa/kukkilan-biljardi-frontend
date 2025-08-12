@@ -27,9 +27,11 @@ export default function Home() {
         <header className="text-center mb-4">
           <h2>Contact Us</h2>
         </header>
-        <p>Telakkakatu 5, Lahti</p>
-        <p>Puh. 040 042 1453</p>
-        <p>vilkasprosnookervaraukset@gmail.com</p>
+        <ul>
+          <li>Address: Telakkakatu 5, Lahti</li>
+          <li>Phone: 040 042 1453</li>
+          <li>Email: vilkasprosnookervaraukset@gmail.com</li>
+        </ul>
       </section>
     </main>
   );
