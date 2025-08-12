@@ -1,11 +1,14 @@
 interface ReserveTableDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
-const ReserveTableDetailPage = ({ params }: ReserveTableDetailPageProps) => {
+const ReserveTableDetailPage = async ({
+  params,
+}: ReserveTableDetailPageProps) => {
+  const { slug } = await params;
   return (
     <main>
-      <h1>Reserve Table: {params.slug}</h1>
+      <h1>Reserve Table: {slug}</h1>
     </main>
   );
 };
