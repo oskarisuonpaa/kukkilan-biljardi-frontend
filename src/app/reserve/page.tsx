@@ -23,21 +23,25 @@ const ReserveLandingPage = () => {
       {/*Noticeboard */}
       <section className="bg-gray-600 rounded-lg p-4 mb-4">
         <header>
-          <h2 className="text-lg font-semibold mb-4">Noticeboard</h2>
+          <h2 className="text-lg font-semibold">Noticeboard</h2>
         </header>
         {/* {<p>Check here for any important announcements or updates.</p>} */}
         <ul>
-          <li className="mb-4">
+          <li className="mt-4">
             <h3 className=" font-semibold">
               Maksutavat laajenivat - voit maksaa myös Epassilla!
             </h3>
             <p>Nykyään voit maksaa varauksesi paikan päällä myös Epassilla.</p>
           </li>
-          <li>
-            <h3 className=" font-semibold">Muutimme hinnastoamme</h3>
+          <li className="mt-4">
+            <h3 className="font-semibold">Muutimme hinnastoamme</h3>
             <p>
               Kaikki tunnit ovat jatkossa 15 € / h, koskien myös jatkotunteja.
             </p>
+          </li>
+          <li className="mt-4">
+            <h3 className="font-semibold">Uusi sarjalippu valikoimassamme</h3>
+            <p>Nyt voit ostaa meiltä myös 10h sarjalipun hintaan 120€.</p>
           </li>
         </ul>
       </section>
