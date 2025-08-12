@@ -1,21 +1,16 @@
-import Link from "next/link";
+"use client";
 
-const TableCard = ({
-  tableNumber,
-  availableSlots,
-}: {
-  tableNumber: number;
-  availableSlots: number;
-}) => {
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+const TableCard = ({ id, tableName }: { id: number; tableName: string }) => {
   return (
     <div className="bg-gray-600 rounded-lg p-4">
-      <h2 className="text-lg font-semibold mb-4 text-center">
-        Pöytä {tableNumber}
-      </h2>
-      <p className="mb-4 text-center">Tänään {availableSlots} vapaata aikaa</p>
+      <h2 className="text-lg font-semibold mb-4 text-center">{tableName}</h2>
+      <p className="mb-4 text-center">Tänään 5 vapaata aikaa</p>
       <Link
         className="bg-blue-500 text-white p-2 rounded block text-center"
-        href={`/reserve/tables/${tableNumber}`}
+        href={`/reserve/tables/${id}`}
       >
         Varaa
       </Link>
@@ -23,24 +18,35 @@ const TableCard = ({
   );
 };
 
+interface Table {
+  id: number;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const ReserveTablePage = () => {
-  const tables = [
-    { tableNumber: 1, availableSlots: 5 },
-    { tableNumber: 2, availableSlots: 3 },
-    { tableNumber: 3, availableSlots: 2 },
-    { tableNumber: 4, availableSlots: 1 },
-  ];
+  const [tables, setTables] = useState<Table[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(`http://localhost:3001/api/calendars`);
+      const data = await response.json();
+      setTables(data);
+    };
+    fetchData();
+  }, []);
 
   return (
     <main>
       <section className="grid grid-cols-2 gap-4">
-        {tables.map((table) => (
-          <TableCard
-            key={table.tableNumber}
-            tableNumber={table.tableNumber}
-            availableSlots={table.availableSlots}
-          />
-        ))}
+        {tables.map(
+          (table) =>
+            table.active && (
+              <TableCard key={table.id} id={table.id} tableName={table.name} />
+            )
+        )}
       </section>
     </main>
   );
