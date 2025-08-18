@@ -3,47 +3,46 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+/* Types first (to avoid using before declaration) */
+type Table = {
+  id: number;
+  name: string;
+  active: boolean;
+};
+
 type TableCardProps = {
   id: number;
   tableName: string;
+  availableSlots?: number;
 };
 
+/* Mock data */
 const mockData: Table[] = [
-  {
-    id: 1,
-    name: "Kaisa 1",
-    active: true,
-  },
-  {
-    id: 2,
-    name: "Kaisa 2",
-    active: true,
-  },
-  {
-    id: 3,
-    name: "Snooker 1",
-    active: true,
-  },
-  {
-    id: 4,
-    name: "Snooker 2",
-    active: true,
-  },
-  {
-    id: 5,
-    name: "Pool",
-    active: true,
-  },
+  { id: 1, name: "Kaisa 1", active: true },
+  { id: 2, name: "Kaisa 2", active: true },
+  { id: 3, name: "Snooker 1", active: true },
+  { id: 4, name: "Snooker 2", active: true },
+  { id: 5, name: "Pool", active: true },
 ];
 
-const TableCard = ({ id, tableName }: TableCardProps) => {
+/* Card */
+const TableCard = ({ id, tableName, availableSlots = 5 }: TableCardProps) => {
   return (
-    <div className="bg-gray-600 rounded-lg p-4">
-      <h2 className="text-lg font-semibold mb-4 text-center">{tableName}</h2>
-      <p className="mb-4 text-center">Tänään 5 vapaata aikaa</p>
+    <div className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-5 shadow-sm">
+      <h2 className="mb-2 text-center text-lg font-semibold text-[var(--text-main)]">
+        {tableName}
+      </h2>
+
+      {/* availability chip */}
+      <p className="mb-5 text-center">
+        <span className="inline-block rounded-full bg-[var(--neutral-soft)] px-3 py-1 text-sm font-medium text-[var(--bg-secondary)]">
+          Tänään {availableSlots} vapaata aikaa
+        </span>
+      </p>
+
       <Link
-        className="bg-blue-500 text-white p-2 rounded block text-center"
         href={`/reserve/tables/${id}`}
+        className="block rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 text-center font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--primary-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]"
       >
         Varaa
       </Link>
@@ -51,32 +50,32 @@ const TableCard = ({ id, tableName }: TableCardProps) => {
   );
 };
 
-type Table = {
-  id: number;
-  name: string;
-  active: boolean;
-};
-
+/* Page */
 const ReserveTablePage = () => {
   const [tables, setTables] = useState<Table[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const data: Table[] = mockData;
-      setTables(data);
+      // replace with real fetch later
+      setTables(mockData);
     };
     fetchData();
   }, []);
 
   return (
-    <main>
-      <section className="grid grid-cols-2 gap-4">
-        {tables.map(
-          (table) =>
-            table.active && (
-              <TableCard key={table.id} id={table.id} tableName={table.name} />
-            )
-        )}
+    <main className="mx-auto max-w-5xl px-6 py-10">
+      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {tables
+          .filter((t) => t.active)
+          .map((table) => (
+            <TableCard
+              key={table.id}
+              id={table.id}
+              tableName={table.name}
+              /* you can compute per-table availability here */
+              availableSlots={5}
+            />
+          ))}
       </section>
     </main>
   );
