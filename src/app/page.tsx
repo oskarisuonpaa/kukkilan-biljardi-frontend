@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <main>
       {/*TLDR*/}
-      <section className="bg-gray-600 rounded-lg p-4 mb-4">
+      <section className="bg-surface rounded-lg p-4 mb-4">
         <header className="text-center mb-4">
           <h2>About Us</h2>
         </header>
@@ -23,7 +23,7 @@ export default function Home() {
         </p>
       </section>
       {/*Contact Us*/}
-      <section className="bg-gray-600 rounded-lg p-4 mb-4">
+      <section className="bg-surface rounded-lg p-4 mb-4">
         <header className="text-center mb-4">
           <h2>Contact Us</h2>
         </header>
