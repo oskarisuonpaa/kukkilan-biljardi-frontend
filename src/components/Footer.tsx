@@ -1,15 +1,13 @@
 const Footer = () => {
   return (
     <footer className="bg-gray-900 p-4">
-      <div className="flex justify-around  text-white">
+      <div className="flex justify-around  text-white mb-4">
         {/*Quick Links */}
         <div>
           <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
           <ul>
             <li>Home</li>
             <li>Make reservation</li>
-            <li>About us</li>
-            <li>Contact</li>
             <li>Privacy Policy</li>
           </ul>
         </div>

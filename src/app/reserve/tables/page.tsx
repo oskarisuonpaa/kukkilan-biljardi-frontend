@@ -8,6 +8,34 @@ type TableCardProps = {
   tableName: string;
 };
 
+const mockData: Table[] = [
+  {
+    id: 1,
+    name: "Kaisa 1",
+    active: true,
+  },
+  {
+    id: 2,
+    name: "Kaisa 2",
+    active: true,
+  },
+  {
+    id: 3,
+    name: "Snooker 1",
+    active: true,
+  },
+  {
+    id: 4,
+    name: "Snooker 2",
+    active: true,
+  },
+  {
+    id: 5,
+    name: "Pool",
+    active: true,
+  },
+];
+
 const TableCard = ({ id, tableName }: TableCardProps) => {
   return (
     <div className="bg-gray-600 rounded-lg p-4">
@@ -27,8 +55,6 @@ type Table = {
   id: number;
   name: string;
   active: boolean;
-  created_at: string;
-  updated_at: string;
 };
 
 const ReserveTablePage = () => {
@@ -36,8 +62,7 @@ const ReserveTablePage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch(`http://localhost:3001/api/calendars`);
-      const data = await response.json();
+      const data: Table[] = mockData;
       setTables(data);
     };
     fetchData();

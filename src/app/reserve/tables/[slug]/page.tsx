@@ -11,7 +11,9 @@ const ReserveTableDetailPage = async ({
     <main>
       <section className="bg-gray-600 rounded-lg p-4 mb-4">
         <header>
-          <h1>Reserve Table: {slug}</h1>
+          <h1>
+            Reserve Table: {slug} {"(Korvataan pöydän nimellä)"}
+          </h1>
         </header>
         <div className="flex flex-row gap-4">
           <div className="w-1/2">{/* Calendar here */}</div>

@@ -13,12 +13,6 @@ const Header = () => {
           <li>
             <Link href="/reserve">Make Reservation</Link>
           </li>
-          <li>
-            <Link href="/about">About</Link>
-          </li>
-          <li>
-            <Link href="/contact">Contact</Link>
-          </li>
         </ul>
       </nav>
     </header>
