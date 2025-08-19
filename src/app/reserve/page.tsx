@@ -84,9 +84,9 @@ const ReserveLandingPage = () => {
           Voit varata Snookerpöydän seuraavina ajankohtina:
         </p>
         <ul className="list-disc list-inside text-[var(--text-secondary)]">
-          <li>Ma–Pe 10–23</li>
-          <li>La 10–23</li>
-          <li>Su 10–23</li>
+          <li>Ma-Pe 10-23</li>
+          <li>La 10-23</li>
+          <li>Su 10-23</li>
         </ul>
       </section>
     </main>

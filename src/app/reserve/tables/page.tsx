@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-/* Types first (to avoid using before declaration) */
 type Table = {
   id: number;
   name: string;
@@ -18,11 +17,10 @@ type TableCardProps = {
 
 /* Mock data */
 const mockData: Table[] = [
-  { id: 1, name: "Kaisa 1", active: true },
-  { id: 2, name: "Kaisa 2", active: true },
-  { id: 3, name: "Snooker 1", active: true },
-  { id: 4, name: "Snooker 2", active: true },
-  { id: 5, name: "Pool", active: true },
+  { id: 1, name: "Kaisa", active: true },
+  { id: 2, name: "Snooker 1", active: true },
+  { id: 3, name: "Snooker 2", active: true },
+  { id: 4, name: "Pool", active: true },
 ];
 
 /* Card */

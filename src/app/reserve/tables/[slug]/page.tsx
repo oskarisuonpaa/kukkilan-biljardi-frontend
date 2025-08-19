@@ -1,12 +1,11 @@
-// app/reserve/tables/[slug]/page.tsx
 interface ReserveTableDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const ReserveTableDetailPage = async ({
   params,
 }: ReserveTableDetailPageProps) => {
-  const { slug } = params;
+  const { slug } = await params;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
