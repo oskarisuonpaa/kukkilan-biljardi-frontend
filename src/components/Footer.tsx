@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 const Footer = () => {
+  const mockContactData = {
+    address: "Latojantie 6, 15270 Kukkila",
+    phone: "040 042 1453",
+    email: "vilkasprosnookervaraukset@gmail.com",
+  };
+
   return (
     <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border)]/60 px-6 py-10 text-[var(--text-secondary)]">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
@@ -68,9 +74,9 @@ const Footer = () => {
             Contact Information
           </h3>
           <ul className="space-y-2">
-            <li>Address: Telakkakatu 5, Lahti</li>
-            <li>Phone: 040 042 1453</li>
-            <li>Email: vilkasprosnookervaraukset@gmail.com</li>
+            <li>Address: {mockContactData.address}</li>
+            <li>Phone: {mockContactData.phone}</li>
+            <li>Email: {mockContactData.email}</li>
           </ul>
         </div>
       </div>
