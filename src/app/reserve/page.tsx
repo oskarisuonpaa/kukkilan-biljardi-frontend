@@ -1,6 +1,22 @@
 import Link from "next/link";
 
 const ReserveLandingPage = () => {
+  const mockNotices = [
+    {
+      title: "Maksutavat laajenivat - voit maksaa myös Epassilla!",
+      content: "Nykyään voit maksaa varauksesi paikan päällä myös Epassilla.",
+    },
+    {
+      title: "Muutimme hinnastoamme",
+      content:
+        "Kaikki tunnit ovat jatkossa 15 € / h, koskien myös jatkotunteja.",
+    },
+    {
+      title: "Uusi sarjalippu valikoimassamme",
+      content: "Nyt voit ostaa meiltä myös 10h sarjalipun hintaan 120€.",
+    },
+  ];
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
       {/* Booking Link */}
@@ -43,26 +59,14 @@ const ReserveLandingPage = () => {
           </h2>
         </header>
         <ul className="mt-4 space-y-6 text-[var(--text-secondary)]">
-          <li>
-            <h3 className="font-semibold text-[var(--text-main)]">
-              Maksutavat laajenivat - voit maksaa myös Epassilla!
-            </h3>
-            <p>Nykyään voit maksaa varauksesi paikan päällä myös Epassilla.</p>
-          </li>
-          <li>
-            <h3 className="font-semibold text-[var(--text-main)]">
-              Muutimme hinnastoamme
-            </h3>
-            <p>
-              Kaikki tunnit ovat jatkossa 15 € / h, koskien myös jatkotunteja.
-            </p>
-          </li>
-          <li>
-            <h3 className="font-semibold text-[var(--text-main)]">
-              Uusi sarjalippu valikoimassamme
-            </h3>
-            <p>Nyt voit ostaa meiltä myös 10h sarjalipun hintaan 120€.</p>
-          </li>
+          {mockNotices.map((notice, id) => (
+            <li key={id}>
+              <h3 className="font-semibold text-[var(--text-main)]">
+                {notice.title}
+              </h3>
+              <p>{notice.content}</p>
+            </li>
+          ))}
         </ul>
       </section>
 
