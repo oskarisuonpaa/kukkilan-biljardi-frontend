@@ -1,38 +1,66 @@
-export default function Home() {
+const Home = () => {
+  const mockContactData = {
+    address: "Latojantie 6, 15270 Kukkila",
+    phone: "040 042 1453",
+    email: "vilkasprosnookervaraukset@gmail.com",
+  };
+
+  const mockAboutUsData = [
+    `Tule pelaamaan laadukkaalle snookerpöydällemme Lahdessa. Tilamme
+            täyttävät kilpapelaajien standardit. Täällä on rauhallinen ilmapiiri
+            pelata tätä hienoa herrasmieslajia.`,
+    `Safari Rally Café pitää huolen, että tarjolla on erittäin laadukasta
+            kahvia, myös espressopohjaisia kahveja. Juomapuolelta löytyy
+            valikoituja viinejä ja oluita sekä artesaanilimonadeja.`,
+    `Kahvin tarinaa kuulet lisää paikan päällä, mutta kerrottakoon, että
+            kun juot tätä laadukasta Kenia-kahvia, olet makunautinnon lisäksi
+            mukana istuttamassa puita Keniaan!`,
+  ];
+
   return (
-    <main>
-      {/*TLDR*/}
-      <section className="bg-gray-600 rounded-lg p-4 mb-4">
-        <header className="text-center mb-4">
-          <h2>About Us</h2>
+    <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+      {/* About Us */}
+      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
+        <header className="mb-6 text-center">
+          <h2 className="text-2xl font-semibold text-[var(--text-main)]">
+            About Us
+          </h2>
+          <div className="mx-auto mt-2 h-1 w-16 rounded bg-[var(--secondary)]" />
         </header>
-        <p className="mb-4">
-          Tule pelaamaan laadukkaalle snookerpöydällemme Lahdessa. Tilamme
-          täyttävät kilpapelaajien standardit. Täällä on rauhallinen ilmapiiri
-          pelata tätä hienoa herrasmieslajia.
-        </p>
-        <p className="mb-4">
-          Safari Rally Café pitää huolen, että tarjolla on erittäin laadukasta
-          kahvia, myös espressopohjaisia kahveja. Juomapuolelta löytyy
-          valikoituja viinejä ja oluita sekä artesaanilimonadeja.
-        </p>
-        <p>
-          Kahvin tarinaa kuulet lisää paikan päällä, mutta kerrottakoon, että
-          kun juot tätä laadukasta Kenia-kahvia, olet makunautinnon lisäksi
-          mukana istuttamassa puita Keniaan!
-        </p>
+        <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
+          {mockAboutUsData.map((data, id) => (
+            <p key={id}>{data}</p>
+          ))}
+        </div>
       </section>
-      {/*Contact Us*/}
-      <section className="bg-gray-600 rounded-lg p-4 mb-4">
-        <header className="text-center mb-4">
-          <h2>Contact Us</h2>
+
+      {/* Contact Us */}
+      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
+        <header className="mb-6 text-center">
+          <h2 className="text-2xl font-semibold text-[var(--text-main)]">
+            Contact Us
+          </h2>
+          <div className="mx-auto mt-2 h-1 w-16 rounded bg-[var(--primary)]" />
         </header>
-        <ul>
-          <li>Address: Telakkakatu 5, Lahti</li>
-          <li>Phone: 040 042 1453</li>
-          <li>Email: vilkasprosnookervaraukset@gmail.com</li>
+        <ul className="space-y-3 text-[var(--text-secondary)]">
+          <li>
+            <span className="font-medium text-[var(--text-main)]">
+              Address:
+            </span>{" "}
+            {mockContactData.address}
+          </li>
+          <li>
+            <span className="font-medium text-[var(--text-main)]">Phone:</span>{" "}
+            {mockContactData.phone}
+          </li>
+          <li>
+            <span className="font-medium text-[var(--text-main)]">Email:</span>{" "}
+            {mockContactData.email}
+          </li>
         </ul>
       </section>
     </main>
   );
-}
+};
+
+export default Home;
