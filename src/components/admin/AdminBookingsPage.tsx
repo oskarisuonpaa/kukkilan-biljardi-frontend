@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import SlotCalendar, { type SlotEvent } from "@/components/SlotCalendar"; // <- adjust path
+import { useEffect, useMemo, useState } from "react";
+import SlotCalendar from "@/components/SlotCalendar";
+import { SlotEvent } from "../SlotCalendar/types";
 
 type CalendarItem = { id: number; name: string; active: boolean };
 type BookingItem = {
@@ -42,6 +43,10 @@ export default function AdminBookingsPage({
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newNotes, setNewNotes] = useState("");
+
+  useEffect(() => {
+    setPendingRange(null);
+  }, [date, selectedCalendar]);
 
   const sameDay = (iso: string) =>
     new Date(iso).toDateString() === date.toDateString();
@@ -167,26 +172,17 @@ export default function AdminBookingsPage({
           <div>
             <SlotCalendar
               date={date}
-              setDate={setDate} // <- enables Prev/Today/Next buttons
+              setDate={setDate}
               startHour={8}
               endHour={22}
               slotMinutes={30}
               events={dayEvents}
               onSelect={setPendingRange}
+              selectedRange={pendingRange}
             />
-            <div className="mt-3 rounded-lg border p-3 text-sm">
-              <div className="mb-1 font-medium">Valittu aika</div>
-              {pendingRange ? (
-                <div>
-                  {new Date(pendingRange.start).toLocaleString()} –{" "}
-                  {new Date(pendingRange.end).toLocaleString()}
-                </div>
-              ) : (
-                <div className="text-[var(--text-secondary)]">Ei valintaa</div>
-              )}
-            </div>
           </div>
 
+          {/* Right column */}
           <div className="flex flex-col gap-3">
             <label className="flex items-center gap-2">
               <span className="text-sm text-[var(--text-muted)]">
@@ -206,6 +202,20 @@ export default function AdminBookingsPage({
               </select>
             </label>
 
+            {/* ✅ Selected time ABOVE the name field */}
+            <div className="rounded-lg border p-3 text-sm">
+              <div className="mb-1 font-medium">Valittu aika</div>
+              {pendingRange ? (
+                <div>
+                  {new Date(pendingRange.start).toLocaleString()} –{" "}
+                  {new Date(pendingRange.end).toLocaleString()}
+                </div>
+              ) : (
+                <div className="text-[var(--text-secondary)]">Ei valintaa</div>
+              )}
+            </div>
+
+            {/* Name, then the rest */}
             <input
               className="rounded-lg border p-2"
               placeholder="Nimi *"
