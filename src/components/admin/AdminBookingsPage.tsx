@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SlotCalendar from "@/components/SlotCalendar";
 import { SlotEvent } from "../SlotCalendar/types";
 
@@ -48,8 +48,10 @@ export default function AdminBookingsPage({
     setPendingRange(null);
   }, [date, selectedCalendar]);
 
-  const sameDay = (iso: string) =>
-    new Date(iso).toDateString() === date.toDateString();
+  const sameDay = useCallback(
+    (iso: string) => new Date(iso).toDateString() === date.toDateString(),
+    [date]
+  );
 
   // Calendar events = booked ranges for selected day+calendar
   const dayEvents: SlotEvent[] = useMemo(
@@ -57,7 +59,7 @@ export default function AdminBookingsPage({
       bookings
         .filter((b) => b.calendar_id === selectedCalendar && sameDay(b.start))
         .map((b) => ({ id: b.id, start: b.start, end: b.end, title: b.name })),
-    [bookings, selectedCalendar, date]
+    [bookings, selectedCalendar, sameDay]
   );
 
   // List section (search/sort)
