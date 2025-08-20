@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import SlotCalendar, { type SlotEvent } from "@/components/SlotCalendar"; // <- adjust path
 
 type CalendarItem = { id: number; name: string; active: boolean };
 type BookingItem = {
@@ -10,25 +11,9 @@ type BookingItem = {
   email: string;
   phone: string;
   notes?: string;
-  start: string; // ISO string
-  end: string; // ISO string
+  start: string;
+  end: string;
 };
-
-const fmtDay = (d: Date) =>
-  new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(d);
-
-const fmtTime = (d: Date) =>
-  new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-
-const toDateKey = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function AdminBookingsPage({
   calendars,
@@ -44,10 +29,36 @@ export default function AdminBookingsPage({
   const [query, setQuery] = useState("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
+  // NEW: calendar date + selected range from calendar
+  const [date, setDate] = useState(new Date());
+  const [pendingRange, setPendingRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
+
+  // Create form (no start/end inputs anymore—picked from calendar)
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newNotes, setNewNotes] = useState("");
+
+  const sameDay = (iso: string) =>
+    new Date(iso).toDateString() === date.toDateString();
+
+  // Calendar events = booked ranges for selected day+calendar
+  const dayEvents: SlotEvent[] = useMemo(
+    () =>
+      bookings
+        .filter((b) => b.calendar_id === selectedCalendar && sameDay(b.start))
+        .map((b) => ({ id: b.id, start: b.start, end: b.end, title: b.name })),
+    [bookings, selectedCalendar, date]
+  );
+
+  // List section (search/sort)
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const base = bookings.filter((b) => b.calendar_id === selectedCalendar);
-
     const searched = q
       ? base.filter((b) =>
           [b.name, b.email, b.phone, b.notes]
@@ -55,45 +66,207 @@ export default function AdminBookingsPage({
             .some((v) => String(v).toLowerCase().includes(q))
         )
       : base;
-
     const sorted = [...searched].sort((a, b) => {
-      const da = new Date(a.start).getTime();
-      const db = new Date(b.start).getTime();
+      const da = +new Date(a.start);
+      const db = +new Date(b.start);
       return sortDir === "asc" ? da - db : db - da;
     });
-
-    const groups = sorted.reduce((acc, b) => {
-      const key = toDateKey(new Date(b.start));
+    const byDate = sorted.reduce((acc, b) => {
+      const key = new Date(b.start).toISOString().slice(0, 10);
       (acc[key] ||= []).push(b);
       return acc;
     }, {} as Record<string, BookingItem[]>);
-
-    return { groups, count: sorted.length };
+    return { groups: byDate, count: sorted.length };
   }, [bookings, selectedCalendar, query, sortDir]);
 
   // DELETE booking (optimistic)
   const handleDeleteBooking = async (id: number) => {
     if (!confirm("Poistetaanko tämä varaus?")) return;
-
     const prev = bookings;
-    // optimistic remove
     setBookings((p) => p.filter((b) => b.id !== id));
-
     try {
       const res = await fetch(`http://localhost:3001/api/bookings/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
     } catch (e) {
-      // rollback
       console.error(e);
       setBookings(prev);
       alert("Poisto epäonnistui. Yritä uudelleen.");
     }
   };
 
+  // CREATE booking from calendar selection
+  const handleCreateBooking = async () => {
+    if (
+      !pendingRange ||
+      !newName.trim() ||
+      !newEmail.trim() ||
+      !newPhone.trim()
+    ) {
+      alert("Valitse kalenterista aika ja täytä pakolliset kentät.");
+      return;
+    }
+    setCreating(true);
+    const temp: BookingItem = {
+      id: -Date.now(),
+      calendar_id: selectedCalendar,
+      name: newName.trim(),
+      email: newEmail.trim(),
+      phone: newPhone.trim(),
+      notes: newNotes.trim() || undefined,
+      start: pendingRange.start,
+      end: pendingRange.end,
+    };
+    setBookings((prev) => [temp, ...prev]);
+
+    try {
+      const res = await fetch("http://localhost:3001/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(temp),
+      });
+      if (!res.ok) throw new Error("Create failed");
+      const created: BookingItem = await res.json();
+      setBookings((prev) => prev.map((b) => (b.id === temp.id ? created : b)));
+      setNewName("");
+      setNewEmail("");
+      setNewPhone("");
+      setNewNotes("");
+      setPendingRange(null);
+    } catch (e) {
+      console.error(e);
+      setBookings((prev) => prev.filter((b) => b.id !== temp.id));
+      alert("Varauksen luonti epäonnistui. Yritä uudelleen.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const fmtDay = (d: Date) =>
+    new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(d);
+  const fmtTime = (d: Date) =>
+    new Intl.DateTimeFormat(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(d);
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
+      {/* CREATE with calendar */}
+      <section className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-[var(--text-main)]">
+          Luo uusi varaus
+        </h2>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <SlotCalendar
+              date={date}
+              setDate={setDate} // <- enables Prev/Today/Next buttons
+              startHour={8}
+              endHour={22}
+              slotMinutes={30}
+              events={dayEvents}
+              onSelect={setPendingRange}
+            />
+            <div className="mt-3 rounded-lg border p-3 text-sm">
+              <div className="mb-1 font-medium">Valittu aika</div>
+              {pendingRange ? (
+                <div>
+                  {new Date(pendingRange.start).toLocaleString()} –{" "}
+                  {new Date(pendingRange.end).toLocaleString()}
+                </div>
+              ) : (
+                <div className="text-[var(--text-secondary)]">Ei valintaa</div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2">
+              <span className="text-sm text-[var(--text-muted)]">
+                Kalenteri
+              </span>
+              <select
+                className="rounded-lg border px-3 py-2 bg-[var(--bg)]"
+                value={selectedCalendar}
+                onChange={(e) => setSelectedCalendar(Number(e.target.value))}
+              >
+                {calendars.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {!c.active ? " (inactive)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <input
+              className="rounded-lg border p-2"
+              placeholder="Nimi *"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <input
+              className="rounded-lg border p-2"
+              placeholder="Sähköposti *"
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+            />
+            <input
+              className="rounded-lg border p-2"
+              placeholder="Puhelin *"
+              type="tel"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+            />
+            <textarea
+              className="min-h-24 rounded-lg border p-2"
+              placeholder="Muistiinpanot"
+              value={newNotes}
+              onChange={(e) => setNewNotes(e.target.value)}
+            />
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCreateBooking}
+                disabled={
+                  creating ||
+                  !pendingRange ||
+                  !newName.trim() ||
+                  !newEmail.trim() ||
+                  !newPhone.trim()
+                }
+                className="rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)] disabled:opacity-60"
+              >
+                {creating ? "Luodaan…" : "Luo varaus"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingRange(null);
+                  setNewName("");
+                  setNewEmail("");
+                  setNewPhone("");
+                  setNewNotes("");
+                }}
+                className="rounded-lg border px-4 py-2"
+              >
+                Tyhjennä
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LIST + search/sort + delete (unchanged except no IDs shown) */}
       <section className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] shadow-sm">
         <header className="flex flex-col gap-4 p-6 md:flex-row md:items-end md:justify-between">
           <div>
@@ -104,15 +277,12 @@ export default function AdminBookingsPage({
               Näytä ja hae varauksia kalentereittain.
             </p>
           </div>
-
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <label className="flex items-center gap-2">
               <span className="text-sm text-[var(--text-muted)]">
                 Kalenteri
               </span>
               <select
-                name="calendar"
-                id="calendar"
                 className="rounded-lg border px-3 py-2 bg-[var(--bg)]"
                 value={selectedCalendar}
                 onChange={(e) => setSelectedCalendar(Number(e.target.value))}
@@ -137,8 +307,6 @@ export default function AdminBookingsPage({
             <button
               onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
               className="rounded-lg border px-3 py-2 text-sm hover:bg-[var(--bg)]"
-              aria-label="Toggle sort direction"
-              title="Lajittele alkamisajan mukaan"
             >
               Sort:{" "}
               {sortDir === "asc" ? "Earliest → Latest" : "Latest → Earliest"}
@@ -152,150 +320,127 @@ export default function AdminBookingsPage({
             {calendars.find((c) => c.id === selectedCalendar)?.name ?? "—"}”
           </div>
 
-          {filtered.count === 0 && (
-            <div className="rounded-xl border border-dashed p-10 text-center text-[var(--text-muted)]">
-              Ei varauksia valitussa kalenterissa (tai hakuehdoilla).
-            </div>
-          )}
+          {Object.entries(filtered.groups).map(([dayKey, items]) => {
+            const day = new Date(dayKey + "T00:00:00");
+            return (
+              <section key={dayKey} className="space-y-3 mb-8">
+                <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)]">
+                  {fmtDay(day)} • {items.length} item
+                  {items.length === 1 ? "" : "s"}
+                </h3>
 
-          <div className="space-y-8">
-            {Object.entries(filtered.groups).map(([dayKey, items]) => {
-              const day = new Date(dayKey + "T00:00:00");
-              return (
-                <section key={dayKey}>
-                  <h3 className="mb-3 text-sm font-semibold tracking-wide text-[var(--text-muted)]">
-                    {fmtDay(day)} • {items.length} item
-                    {items.length === 1 ? "" : "s"}
-                  </h3>
-
-                  {/* Table on desktop */}
-                  <div className="hidden md:block overflow-x-auto rounded-xl border">
-                    <table className="w-full text-sm">
-                      <thead className="bg-[var(--bg)]">
-                        <tr className="[&>th]:px-4 [&>th]:py-3 text-left">
-                          <th>Time</th>
-                          <th>Name</th>
-                          <th>Contact</th>
-                          <th>Notes</th>
-                          <th className="text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="[&>tr:not(:last-child)]:border-b">
-                        {items.map((b) => {
-                          const s = new Date(b.start);
-                          const e = new Date(b.end);
-                          return (
-                            <tr key={b.id} className="[&>td]:px-4 [&>td]:py-3">
-                              <td className="whitespace-nowrap">
-                                {fmtTime(s)} – {fmtTime(e)}
-                              </td>
-                              <td className="font-medium">{b.name}</td>
-                              <td className="space-y-1">
-                                <div>
-                                  <a
-                                    className="underline"
-                                    href={`mailto:${b.email}`}
-                                  >
-                                    {b.email}
-                                  </a>
-                                </div>
-                                {b.phone && (
-                                  <div>
-                                    <a
-                                      className="underline"
-                                      href={`tel:${b.phone}`}
-                                    >
-                                      {b.phone}
-                                    </a>
-                                  </div>
-                                )}
-                              </td>
-                              <td className="max-w-[28rem]">
-                                {b.notes ? (
-                                  <span title={b.notes}>{b.notes}</span>
-                                ) : (
-                                  <span className="text-[var(--text-muted)]">
-                                    —
-                                  </span>
-                                )}
-                              </td>
-                              <td className="text-right">
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteBooking(b.id)}
-                                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 font-medium
-                                             hover:border-[var(--danger)] hover:text-[var(--danger)]
-                                             focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
-                                >
-                                  Poista
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Cards on mobile */}
-                  <div className="md:hidden space-y-3">
-                    {items.map((b) => {
-                      const s = new Date(b.start);
-                      const e = new Date(b.end);
-                      return (
-                        <article key={b.id} className="rounded-xl border p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-[var(--text-muted)]">
+                <div className="hidden md:block overflow-x-auto rounded-xl border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-[var(--bg)]">
+                      <tr className="[&>th]:px-4 [&>th]:py-3 text-left">
+                        <th>Time</th>
+                        <th>Name</th>
+                        <th>Contact</th>
+                        <th>Notes</th>
+                        <th className="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="[&>tr:not(:last-child)]:border-b">
+                      {items.map((b) => {
+                        const s = new Date(b.start);
+                        const e = new Date(b.end);
+                        return (
+                          <tr key={b.id} className="[&>td]:px-4 [&>td]:py-3">
+                            <td className="whitespace-nowrap">
                               {fmtTime(s)} – {fmtTime(e)}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteBooking(b.id)}
-                              className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-1.5 text-sm font-medium
-                                         hover:border-[var(--danger)] hover:text-[var(--danger)]
-                                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
-                            >
-                              Poista
-                            </button>
-                          </div>
-                          <div className="mt-1 font-medium">{b.name}</div>
-                          <div className="mt-2 text-sm">
-                            <div>
-                              <a
-                                className="underline"
-                                href={`mailto:${b.email}`}
-                              >
-                                {b.email}
-                              </a>
-                            </div>
-                            {b.phone && (
+                            </td>
+                            <td className="font-medium">{b.name}</td>
+                            <td className="space-y-1">
                               <div>
                                 <a
                                   className="underline"
-                                  href={`tel:${b.phone}`}
+                                  href={`mailto:${b.email}`}
                                 >
-                                  {b.phone}
+                                  {b.email}
                                 </a>
                               </div>
-                            )}
+                              {b.phone && (
+                                <div>
+                                  <a
+                                    className="underline"
+                                    href={`tel:${b.phone}`}
+                                  >
+                                    {b.phone}
+                                  </a>
+                                </div>
+                              )}
+                            </td>
+                            <td className="max-w-[28rem]">
+                              {b.notes ?? (
+                                <span className="text-[var(--text-muted)]">
+                                  —
+                                </span>
+                              )}
+                            </td>
+                            <td className="text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBooking(b.id)}
+                                className="rounded-lg border px-3 py-2 hover:border-[var(--danger)] hover:text-[var(--danger)]"
+                              >
+                                Poista
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="md:hidden space-y-3">
+                  {items.map((b) => {
+                    const s = new Date(b.start);
+                    const e = new Date(b.end);
+                    return (
+                      <article key={b.id} className="rounded-xl border p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-[var(--text-muted)]">
+                            {fmtTime(s)} – {fmtTime(e)}
                           </div>
-                          <div className="mt-2 text-sm">
-                            {b.notes ? (
-                              b.notes
-                            ) : (
-                              <span className="text-[var(--text-muted)]">
-                                No notes
-                              </span>
-                            )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBooking(b.id)}
+                            className="rounded-lg border px-3 py-1.5 text-sm hover:border-[var(--danger)] hover:text-[var(--danger)]"
+                          >
+                            Poista
+                          </button>
+                        </div>
+                        <div className="mt-1 font-medium">{b.name}</div>
+                        <div className="mt-2 text-sm">
+                          <div>
+                            <a className="underline" href={`mailto:${b.email}`}>
+                              {b.email}
+                            </a>
                           </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
+                          {b.phone && (
+                            <div>
+                              <a className="underline" href={`tel:${b.phone}`}>
+                                {b.phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-2 text-sm">
+                          {b.notes ?? (
+                            <span className="text-[var(--text-muted)]">
+                              No notes
+                            </span>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </section>
     </main>
