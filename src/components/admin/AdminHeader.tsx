@@ -45,10 +45,16 @@ const AdminHeader = () => {
         <nav className="flex items-center gap-6">
           <ul className="flex items-center gap-2">
             <li>
-              <NavLink href="/admin">Home</NavLink>
+              <NavLink href="/admin">Aloitus</NavLink>
             </li>
             <li>
               <NavLink href="/admin/calendars">Kalenterit</NavLink>
+            </li>
+            <li>
+              <NavLink href="/admin/bookings">Varaukset</NavLink>
+            </li>
+            <li>
+              <NavLink href="/">Poistu</NavLink>
             </li>
           </ul>
         </nav>
