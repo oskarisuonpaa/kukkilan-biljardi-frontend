@@ -1,30 +1,27 @@
-const AdminCalendarsPage = () => {
-  const mockCalendars = [
-    { id: 1, name: "Testi 1", active: true },
-    { id: 2, name: "Testi 2", active: true },
-    { id: 3, name: "Testi 3", active: true },
-    { id: 4, name: "Testi 4", active: true },
-  ];
+import AdminCalendarsPage from "@/components/admin/AdminCalendarsPage";
 
-  return (
-    <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
-      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
-        <header>
-          <h2 className="text-xl font-semibold mb-4 text-[var(--text-main)] text-center">
-            Varauskalenterien hallinta
-          </h2>
-          <ul>
-            {mockCalendars.map((calendar, id) => (
-              <li key={id}>
-                {calendar.name}{" "}
-                {calendar.active ? "Aktiivinen" : "Poissa käytöstä"}
-              </li>
-            ))}
-          </ul>
-        </header>
-      </section>
-    </main>
-  );
+type CalendarItem = { id: number; name: string; active: boolean };
+
+const initialCalendars: CalendarItem[] = [
+  { id: 1, name: "Testi 1", active: true },
+  { id: 2, name: "Testi 2", active: true },
+  { id: 3, name: "Testi 3", active: true },
+  { id: 4, name: "Testi 4", active: true },
+];
+
+const fetchCalendars = async () => {
+  // const res = await fetch("https://api.example.com/calendars", {
+  //   cache: "no-store",
+  // });
+  // if (!res.ok) throw new Error("Failed to fetch calendars");
+  // return res.json();
+  return initialCalendars;
 };
 
-export default AdminCalendarsPage;
+const Page = async () => {
+  const calendars = await fetchCalendars();
+
+  return <AdminCalendarsPage initialCalendars={calendars} />;
+};
+
+export default Page;
