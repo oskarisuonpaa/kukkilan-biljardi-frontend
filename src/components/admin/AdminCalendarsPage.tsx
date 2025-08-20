@@ -60,7 +60,7 @@ const AdminCalendarsPage = ({
     setCalendars((prev) => [temp, ...prev]);
 
     try {
-      const res = await fetch("/api/calendars", {
+      const res = await fetch("http://localhost:3001/api/calendars", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: temp.name, active: temp.active }),
@@ -95,7 +95,9 @@ const AdminCalendarsPage = ({
     setBaseline((p) => p.filter((b) => b.id !== id));
 
     try {
-      const res = await fetch(`/api/calendars/${id}`, { method: "DELETE" });
+      const res = await fetch(`http://localhost:3001/api/calendars/${id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Delete failed");
     } catch (e) {
       // rollback both
@@ -201,21 +203,16 @@ const AdminCalendarsPage = ({
                 className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_auto_auto]"
               >
                 {/* name */}
-                <label className="flex flex-col gap-2">
-                  <span className="text-[var(--text-main)]">
-                    Kalenterin nimi
-                  </span>
-                  <input
-                    type="text"
-                    value={calendar.name}
-                    onChange={(e) =>
-                      handleNameChange(calendar.id, e.target.value)
-                    }
-                    className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
+                <input
+                  type="text"
+                  value={calendar.name}
+                  onChange={(e) =>
+                    handleNameChange(calendar.id, e.target.value)
+                  }
+                  className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
                                text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
                                focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
-                  />
-                </label>
+                />
 
                 {/* active */}
                 <label className="self-center flex items-center gap-2 md:justify-center">
@@ -254,7 +251,7 @@ const AdminCalendarsPage = ({
                                hover:border-[var(--secondary)] hover:text-[var(--secondary)]
                                focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
                   >
-                    Reset
+                    Hylkää
                   </button>
 
                   <button
