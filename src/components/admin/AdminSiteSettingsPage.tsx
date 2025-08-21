@@ -2,19 +2,19 @@
 
 import { useMemo, useState } from "react";
 
-type Notice = {
+type NoticeItem = {
   id: string;
   title: string;
   content: string;
   active: boolean;
 };
 
-const initialNotices: Notice[] = [
-  { id: "1", title: "Title", content: "Ayy LMAO.", active: true },
-];
-
-export default function AdminSiteSettingsPage() {
-  const [notices, setNotices] = useState<Notice[]>(initialNotices);
+export default function AdminSiteSettingsPage({
+  initialNotices,
+}: {
+  initialNotices: NoticeItem[];
+}) {
+  const [notices, setNotices] = useState<NoticeItem[]>(initialNotices);
 
   // New notice draft
   const [draft, setDraft] = useState<{
@@ -56,7 +56,7 @@ export default function AdminSiteSettingsPage() {
     );
   };
 
-  const handleSubmitRow = (notice: Notice) => {
+  const handleSubmitRow = (notice: NoticeItem) => {
     // Replace with your API call/mutation
     console.log("Save notice:", notice);
   };
@@ -87,7 +87,7 @@ export default function AdminSiteSettingsPage() {
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : String(Date.now());
-    const newNotice: Notice = {
+    const newNotice: NoticeItem = {
       id,
       title: draft.title.trim(),
       content: draft.content.trim(),
