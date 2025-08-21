@@ -179,7 +179,7 @@ const AdminCalendarsPage = ({
 
       {/* EDIT / DELETE / RESET */}
       <section className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-6 shadow-sm">
-        <header className="mb-6 text-center">
+        <header className="mb-6 ">
           <h2 className="mb-2 text-xl font-semibold text-[var(--text-main)]">
             Varauskalenterien hallinta
           </h2>
@@ -251,7 +251,7 @@ const AdminCalendarsPage = ({
                                hover:border-[var(--secondary)] hover:text-[var(--secondary)]
                                focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
                   >
-                    Hylkää
+                    Palauta
                   </button>
 
                   <button

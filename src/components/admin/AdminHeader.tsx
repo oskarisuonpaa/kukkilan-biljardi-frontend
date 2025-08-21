@@ -54,7 +54,7 @@ const AdminHeader = () => {
               <NavLink href="/admin/bookings">Varaukset</NavLink>
             </li>
             <li>
-              <NavLink href="/admin/site-settings">Sivusto asetukset</NavLink>
+              <NavLink href="/admin/site-settings">Sivuston asetukset</NavLink>
             </li>
             <li>
               <NavLink href="/">Poistu</NavLink>

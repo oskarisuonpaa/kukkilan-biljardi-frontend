@@ -93,5 +93,5 @@ body {
 
 main {
   min-height: calc(100vh - 60px);
-  @apply p-8 max-w-4xl mx-auto;
+  @apply p-8 max-w-6xl mx-auto;
 }
