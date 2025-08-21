@@ -31,10 +31,10 @@ const AdminCalendarsPage = ({
 
   // save row (PUT)
   const handleSubmitRow = async (item: CalendarItem) => {
-    const res = await fetch(`/api/calendars/${item.id}`, {
+    const res = await fetch(`http://localhost:3001/api/calendars/${item.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(item),
+      body: JSON.stringify({ name: item.name, active: item.active }),
     });
     const saved: CalendarItem = await res.json();
     // reflect saved to UI + baseline
