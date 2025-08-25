@@ -136,7 +136,7 @@ section > header > h2 {
   @apply text-2xl font-semibold text-[var(--text-main)];
 }
 
-div.section-undeline {
+.section-undeline {
   @apply mx-auto mt-2 h-1 w-16 rounded bg-[var(--secondary)];
 }
 
