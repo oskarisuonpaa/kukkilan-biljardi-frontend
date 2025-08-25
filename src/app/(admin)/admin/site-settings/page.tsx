@@ -1,7 +1,7 @@
 import AdminSiteSettingsPage from "@/components/admin/AdminSiteSettingsPage";
 
 const fetchNotices = async () => {
-  const response = await fetch("/api/notices", {
+  const response = await fetch("http://localhost:3000/api/notices", {
     cache: "no-store",
     next: { revalidate: 0 },
   });
