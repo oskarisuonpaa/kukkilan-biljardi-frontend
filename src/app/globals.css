@@ -102,13 +102,13 @@ button.primary {
                            transition-colors hover:bg-[var(--primary-hover)]
                            focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
                            focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]
-                           disabled:opacity-50 disabled:cursor-not-allowed;
+                           disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer;
 }
 
 button.danger {
   @apply rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
                                hover:border-[var(--danger)] hover:text-[var(--danger)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)];
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)] hover:cursor-pointer;
 }
 
 input.text {
@@ -122,4 +122,28 @@ textarea {
                          text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
                          focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
                          resize-y;
+}
+
+section {
+  @apply rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-6 shadow-sm;
+}
+
+section > header {
+  @apply mb-6 text-center;
+}
+
+section > header > h2 {
+  @apply text-2xl font-semibold text-[var(--text-main)];
+}
+
+div.section-undeline {
+  @apply mx-auto mt-2 h-1 w-16 rounded bg-[var(--secondary)];
+}
+
+a.big-primary {
+  @apply inline-block rounded-lg px-4 py-2 font-medium transition-colors
+                     bg-[var(--primary)] text-[var(--text-main)]
+                     hover:bg-[var(--primary-hover)]
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
+                     focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)];
 }

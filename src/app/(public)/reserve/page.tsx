@@ -1,30 +1,32 @@
 import Link from "next/link";
 
-const ReserveLandingPage = () => {
-  const mockNotices = [
-    {
-      title: "Maksutavat laajenivat - voit maksaa myös Epassilla!",
-      content: "Nykyään voit maksaa varauksesi paikan päällä myös Epassilla.",
-    },
-    {
-      title: "Muutimme hinnastoamme",
-      content:
-        "Kaikki tunnit ovat jatkossa 15 € / h, koskien myös jatkotunteja.",
-    },
-    {
-      title: "Uusi sarjalippu valikoimassamme",
-      content: "Nyt voit ostaa meiltä myös 10h sarjalipun hintaan 120€.",
-    },
-  ];
+type NoticeItem = {
+  id: number;
+  title: string;
+  content: string;
+  active: boolean;
+};
+
+const fetchNotices = async () => {
+  const response = await fetch("http://localhost:3000/api/notices", {
+    cache: "no-store",
+    next: { revalidate: 0 },
+  });
+  if (!response.ok) throw new Error("Failed to fetch notices");
+  return response.json();
+};
+
+const ReserveLandingPage = async () => {
+  const notices: NoticeItem[] = await fetchNotices();
+  const activeNotices: NoticeItem[] = notices.filter((notice) => notice.active);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+    <main>
       {/* Booking Link */}
-      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
+      <section>
         <header>
-          <h2 className="text-xl font-semibold mb-4 text-[var(--text-main)]">
-            Book a Table
-          </h2>
+          <h2>Book a Table</h2>
+          <div className="section-undeline" />
         </header>
         <p className="text-[var(--text-secondary)]">
           Click the button below to make a reservation.
@@ -39,43 +41,36 @@ const ReserveLandingPage = () => {
           </Link>
           .
         </p>
-        <Link
-          href="/reserve/tables"
-          className="inline-block rounded-lg px-4 py-2 font-medium transition-colors
-                     bg-[var(--primary)] text-[var(--text-main)]
-                     hover:bg-[var(--primary-hover)]
-                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                     focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]"
-        >
+        <Link href="/reserve/tables" className="big-primary">
           Reserve Now
         </Link>
       </section>
 
       {/* Noticeboard */}
-      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
-        <header>
-          <h2 className="text-xl font-semibold text-[var(--text-main)]">
-            Noticeboard
-          </h2>
-        </header>
-        <ul className="mt-4 space-y-6 text-[var(--text-secondary)]">
-          {mockNotices.map((notice, id) => (
-            <li key={id}>
-              <h3 className="font-semibold text-[var(--text-main)]">
-                {notice.title}
-              </h3>
-              <p>{notice.content}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {activeNotices.length > 0 && (
+        <section>
+          <header>
+            <h2>Noticeboard</h2>
+            <div className="section-undeline" />
+          </header>
+          <ul className="mt-4 space-y-6 text-[var(--text-secondary)]">
+            {activeNotices.map((notice, id) => (
+              <li key={id}>
+                <h3 className="font-semibold text-[var(--text-main)]">
+                  {notice.title}
+                </h3>
+                <p>{notice.content}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Info */}
-      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
+      <section>
         <header>
-          <h2 className="text-xl font-semibold mb-4 text-[var(--text-main)]">
-            Information
-          </h2>
+          <h2>Information</h2>
+          <div className="section-undeline" />
         </header>
         <p className="underline font-semibold mb-4 text-[var(--secondary)]">
           Snooker-kahvila auki sopimuksen ja varauksien mukaan!

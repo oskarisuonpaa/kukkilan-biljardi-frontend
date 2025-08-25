@@ -18,14 +18,12 @@ const Home = () => {
   ];
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+    <main>
       {/* About Us */}
-      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
-        <header className="mb-6 text-center">
-          <h2 className="text-2xl font-semibold text-[var(--text-main)]">
-            About Us
-          </h2>
-          <div className="mx-auto mt-2 h-1 w-16 rounded bg-[var(--secondary)]" />
+      <section>
+        <header>
+          <h2>About Us</h2>
+          <div className="section-undeline" />
         </header>
         <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
           {mockAboutUsData.map((data, id) => (
@@ -35,12 +33,10 @@ const Home = () => {
       </section>
 
       {/* Contact Us */}
-      <section className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border)]/60 shadow-sm">
-        <header className="mb-6 text-center">
-          <h2 className="text-2xl font-semibold text-[var(--text-main)]">
-            Contact Us
-          </h2>
-          <div className="mx-auto mt-2 h-1 w-16 rounded bg-[var(--primary)]" />
+      <section>
+        <header>
+          <h2>Contact Us</h2>
+          <div className="section-undeline" />
         </header>
         <ul className="space-y-3 text-[var(--text-secondary)]">
           <li>
