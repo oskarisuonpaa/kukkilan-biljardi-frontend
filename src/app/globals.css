@@ -93,5 +93,33 @@ body {
 
 main {
   min-height: calc(100vh - 60px);
-  @apply p-8 max-w-6xl mx-auto;
+  @apply mx-auto max-w-4xl px-6 py-10 space-y-8;
+}
+
+button.primary {
+  @apply rounded-lg
+  border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)]
+                           transition-colors hover:bg-[var(--primary-hover)]
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
+                           focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]
+                           disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+button.danger {
+  @apply rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
+                               hover:border-[var(--danger)] hover:text-[var(--danger)]
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)];
+}
+
+input.text {
+  @apply rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
+                         text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)];
+}
+
+textarea {
+  @apply rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
+                         text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
+                         resize-y;
 }

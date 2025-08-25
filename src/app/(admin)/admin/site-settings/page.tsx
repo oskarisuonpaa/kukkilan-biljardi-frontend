@@ -1,12 +1,11 @@
 import AdminSiteSettingsPage from "@/components/admin/AdminSiteSettingsPage";
 
 const fetchNotices = async () => {
-  const res = await fetch("http://localhost:3001/api/notices", {
+  const response = await fetch("http://localhost:3000/api/notices", {
     cache: "no-store",
   });
-  if (!res.ok) throw new Error("Failed to fetch notices");
-  const data = await res.json();
-  return data;
+  if (!response.ok) throw new Error("Failed to fetch notices");
+  return response.json();
 };
 
 const Page = async () => {

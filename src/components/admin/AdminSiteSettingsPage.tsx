@@ -64,21 +64,99 @@ const AdminSiteNoticesSection = ({
 
   // PUT
   const handleSubmitRow = async (item: NoticeItem) => {
-    console.log(
-      `Updating item with id: ${item.id} with data: ${
-        (item.title, item.content, item.active)
-      }`
+    const response = await fetch(`/api/notices/${item.id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        title: item.title,
+        content: item.content,
+        active: item.active,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update notice");
+    }
+
+    const saved: NoticeItem = await response.json();
+
+    setNotices((previous) =>
+      previous.map((notice) => (notice.id === saved.id ? saved : notice))
+    );
+    setBaseline((previous) =>
+      previous.some((b) => b.id === saved.id)
+        ? previous.map((b) => (b.id === saved.id ? saved : b))
+        : [saved, ...previous]
     );
   };
 
   // POST
   const handleCreate = async () => {
-    console.log("Creating a new notice");
+    if (!newTitle.trim() || !newContent.trim()) return;
+
+    setCreating(true);
+
+    const temp: NoticeItem = {
+      id: -Date.now(),
+      title: newTitle.trim(),
+      content: newContent.trim(),
+      active: newActive,
+    };
+
+    setNotices((previous) => [temp, ...previous]);
+
+    try {
+      const response = await fetch("/api/notices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: temp.title,
+          content: temp.content,
+          active: temp.active,
+        }),
+      });
+
+      const created: NoticeItem = await response.json();
+
+      setNotices((previous) =>
+        previous.map((notice) => (notice.id === temp.id ? created : notice))
+      );
+      setBaseline((previous) => [created, ...previous]);
+
+      setNewTitle("");
+      setNewContent("");
+      setNewActive(true);
+    } catch (error) {
+      setNotices((previous) =>
+        previous.filter((notice) => notice.id !== temp.id)
+      );
+
+      console.error("Create failed", error);
+    } finally {
+      setCreating(false);
+    }
   };
 
   // DELETE
   const handleDelete = async (id: number) => {
-    console.log(`Deleting notice with id: ${id}`);
+    if (!confirm("Poistetaanko tämä tiedote?")) return;
+
+    const previousUI = notices;
+    const previousBaseline = baseline;
+
+    setNotices((notices) => notices.filter((notice) => notice.id !== id));
+    setBaseline((notices) => notices.filter((notice) => notice.id !== id));
+
+    try {
+      const response = await fetch(`/api/notices/${id}`, { method: "DELETE" });
+
+      if (!response.ok) throw new Error("Delete failed");
+    } catch (error) {
+      setNotices(previousUI);
+      setBaseline(previousBaseline);
+
+      console.log(error);
+    }
   };
 
   // Reset row
@@ -123,9 +201,7 @@ const AdminSiteNoticesSection = ({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Otsikko"
-            className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
-                         text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+            className="text"
           />
 
           <textarea
@@ -133,10 +209,6 @@ const AdminSiteNoticesSection = ({
             onChange={(e) => setNewContent(e.target.value)}
             placeholder="Sisältö"
             rows={4}
-            className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
-                         text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                         resize-y"
           />
 
           <label className="flex items-center gap-2">
@@ -165,14 +237,10 @@ const AdminSiteNoticesSection = ({
             <button
               type="button"
               onClick={handleCreate}
-              disabled={!canCreate}
-              className="rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)]
-                           transition-colors hover:bg-[var(--primary-hover)]
-                           focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                           focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]
-                           disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!canCreate || creating}
+              className="primary"
             >
-              Luo tiedote
+              {creating ? "Luodaan…" : "Luo tiedote"}
             </button>
           </div>
 
@@ -212,9 +280,7 @@ const AdminSiteNoticesSection = ({
                   value={notice.title}
                   onChange={(e) => handleTitleChange(notice.id, e.target.value)}
                   placeholder="Otsikko"
-                  className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
-                               text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+                  className="text"
                 />
 
                 {/* content (multiline) */}
@@ -225,10 +291,6 @@ const AdminSiteNoticesSection = ({
                   }
                   placeholder="Sisältö"
                   rows={4}
-                  className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
-                               text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                               resize-y"
                 />
 
                 {/* active */}
@@ -254,22 +316,14 @@ const AdminSiteNoticesSection = ({
 
                 {/* actions (under inputs) */}
                 <div className="flex flex-wrap items-center gap-2 justify-end">
-                  <button
-                    type="submit"
-                    className="rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)]
-                                 transition-colors hover:bg-[var(--primary-hover)]
-                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                                 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]"
-                  >
+                  <button type="submit" className="primary">
                     Lähetä muutokset
                   </button>
 
                   <button
                     type="button"
                     onClick={() => resetRow(notice.id)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
-                                 hover:border-[var(--secondary)] hover:text-[var(--secondary)]
-                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+                    className="danger"
                   >
                     Palauta
                   </button>
@@ -277,9 +331,7 @@ const AdminSiteNoticesSection = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(notice.id)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
-                                 hover:border-[var(--danger)] hover:text-[var(--danger)]
-                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
+                    className="danger"
                   >
                     Poista
                   </button>
@@ -299,7 +351,7 @@ export default function AdminSiteSettingsPage({
   initialNotices: NoticeItem[];
 }) {
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
+    <main>
       {/* Notices */}
       <AdminSiteNoticesSection initialNotices={initialNotices} />
       {/* Opening Times */}

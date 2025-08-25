@@ -118,7 +118,7 @@ const AdminCalendarsPage = ({
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+    <main>
       {/* CREATE NEW */}
       <section className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-6 shadow-sm">
         <header className="mb-4">
@@ -134,9 +134,7 @@ const AdminCalendarsPage = ({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Esim. Snooker 1"
-              className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
-                         text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+              className="text"
             />
             <label className="mt-1 flex items-center gap-2 text-[var(--text-secondary)]">
               <input
@@ -154,10 +152,7 @@ const AdminCalendarsPage = ({
               type="button"
               disabled={creating || !newName.trim()}
               onClick={handleCreate}
-              className="rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)]
-                         transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-60
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                         focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]"
+              className="primary"
             >
               {creating ? "Luodaan…" : "Luo kalenteri"}
             </button>
@@ -167,9 +162,7 @@ const AdminCalendarsPage = ({
                 setNewName("");
                 setNewActive(true);
               }}
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
-                         hover:border-[var(--secondary)] hover:text-[var(--secondary)]
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+              className="danger"
             >
               Tyhjennä
             </button>
@@ -209,9 +202,7 @@ const AdminCalendarsPage = ({
                   onChange={(e) =>
                     handleNameChange(calendar.id, e.target.value)
                   }
-                  className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2
-                               text-[var(--text-main)] placeholder:text-[var(--text-secondary)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+                  className="text"
                 />
 
                 {/* active */}
@@ -231,13 +222,7 @@ const AdminCalendarsPage = ({
 
                 {/* save */}
                 <div className="flex items-center md:justify-end">
-                  <button
-                    type="submit"
-                    className="rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)]
-                               transition-colors hover:bg-[var(--primary-hover)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]
-                               focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]"
-                  >
+                  <button type="submit" className="primary">
                     Lähetä muutokset
                   </button>
                 </div>
@@ -247,9 +232,7 @@ const AdminCalendarsPage = ({
                   <button
                     type="button"
                     onClick={() => resetRow(calendar.id)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
-                               hover:border-[var(--secondary)] hover:text-[var(--secondary)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)]"
+                    className="danger"
                   >
                     Palauta
                   </button>
@@ -257,9 +240,7 @@ const AdminCalendarsPage = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(calendar.id)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)]
-                               hover:border-[var(--danger)] hover:text-[var(--danger)]
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
+                    className="danger"
                   >
                     Poista
                   </button>

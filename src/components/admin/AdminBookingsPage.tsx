@@ -191,7 +191,9 @@ export default function AdminBookingsPage({
                 Kalenteri
               </span>
               <select
-                className="rounded-lg border px-3 py-2 bg-[var(--bg)]"
+                className="rounded-lg
+  border border-[var(--border)]/60 bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)] focus:outline-none
+                           "
                 value={selectedCalendar}
                 onChange={(e) => setSelectedCalendar(Number(e.target.value))}
               >
@@ -205,7 +207,7 @@ export default function AdminBookingsPage({
             </label>
 
             {/* ✅ Selected time ABOVE the name field */}
-            <div className="rounded-lg border p-3 text-sm">
+            <div className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2">
               <div className="mb-1 font-medium">Valittu aika</div>
               {pendingRange ? (
                 <div>
@@ -219,27 +221,26 @@ export default function AdminBookingsPage({
 
             {/* Name, then the rest */}
             <input
-              className="rounded-lg border p-2"
+              className="text"
               placeholder="Nimi *"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
-              className="rounded-lg border p-2"
+              className="text"
               placeholder="Sähköposti *"
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
             />
             <input
-              className="rounded-lg border p-2"
+              className="text"
               placeholder="Puhelin *"
               type="tel"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
             />
             <textarea
-              className="min-h-24 rounded-lg border p-2"
               placeholder="Muistiinpanot"
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
@@ -256,7 +257,7 @@ export default function AdminBookingsPage({
                   !newEmail.trim() ||
                   !newPhone.trim()
                 }
-                className="rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 font-medium text-[var(--text-main)] disabled:opacity-60"
+                className="primary"
               >
                 {creating ? "Luodaan…" : "Luo varaus"}
               </button>
@@ -269,7 +270,7 @@ export default function AdminBookingsPage({
                   setNewPhone("");
                   setNewNotes("");
                 }}
-                className="rounded-lg border px-4 py-2"
+                className="danger"
               >
                 Tyhjennä
               </button>
@@ -393,7 +394,7 @@ export default function AdminBookingsPage({
                               <button
                                 type="button"
                                 onClick={() => handleDeleteBooking(b.id)}
-                                className="rounded-lg border px-3 py-2 hover:border-[var(--danger)] hover:text-[var(--danger)]"
+                                className="danger"
                               >
                                 Poista
                               </button>
@@ -419,7 +420,7 @@ export default function AdminBookingsPage({
                           <button
                             type="button"
                             onClick={() => handleDeleteBooking(b.id)}
-                            className="rounded-lg border px-3 py-1.5 text-sm hover:border-[var(--danger)] hover:text-[var(--danger)]"
+                            className="danger"
                           >
                             Poista
                           </button>
