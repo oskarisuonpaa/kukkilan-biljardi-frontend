@@ -1,36 +1,45 @@
-const BACKEND_BASE_URL = process.env.BACKEND_URL;
-
-const GET = async () => {
-  const response = await fetch(`${BACKEND_BASE_URL}/api/notices`, {
-    cache: "no-store",
-    next: { revalidate: 0 },
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "Failed to fetch notices");
-    return new Response(text, { status: response.status || 502 });
+export async function GET() {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) {
+    return new Response("BACKEND_URL not configured", { status: 500 });
   }
 
-  const data = await response.json();
-  return Response.json(data);
-};
+  const response = await fetch(`${backendUrl}/api/notices`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const errorText = await response
+      .text()
+      .catch(() => "Failed to fetch notices");
+    return new Response(errorText, { status: response.status || 502 });
+  }
 
-const POST = async (request: Request) => {
-  const body = await request.json();
-  const response = await fetch(`${BACKEND_BASE_URL}/api/notices`, {
+  const notices = await response.json();
+  return Response.json(notices, { status: 200 });
+}
+
+export async function POST(request: Request) {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) {
+    return new Response("BACKEND_URL not configured", { status: 500 });
+  }
+
+  const requestBody = await request.json();
+
+  const response = await fetch(`${backendUrl}/api/notices`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    next: { revalidate: 0 },
+    body: JSON.stringify(requestBody),
+    cache: "no-store",
   });
 
   if (!response.ok) {
-    const text = await response.text().catch(() => "Failed to create notice");
-    return new Response(text, { status: response.status || 502 });
+    const errorText = await response
+      .text()
+      .catch(() => "Failed to create notice");
+    return new Response(errorText, { status: response.status || 502 });
   }
 
-  const data = await response.json();
-  return Response.json(data, { status: 201 });
-};
-
-export { GET, POST };
+  const createdNotice = await response.json();
+  return Response.json(createdNotice, { status: 201 });
+}
