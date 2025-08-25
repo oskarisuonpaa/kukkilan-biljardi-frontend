@@ -1,3 +1,5 @@
+// TODO: CLEAN THIS SHIT UP
+
 const AdminFooter = () => {
   return (
     <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border)]/60 px-6 py-6 text-[var(--text-secondary)]">

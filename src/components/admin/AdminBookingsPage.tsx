@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: CLEAN THIS SHIT UP
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SlotCalendar from "@/components/SlotCalendar";
 import { SlotEvent } from "../SlotCalendar/types";

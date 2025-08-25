@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: CLEAN THIS SHIT UP
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PropsWithChildren } from "react";

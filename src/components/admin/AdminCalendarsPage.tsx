@@ -1,4 +1,7 @@
 "use client";
+
+// TODO: CLEAN THIS SHIT UP
+
 import { useState } from "react";
 
 type CalendarItem = { id: number; name: string; active: boolean };

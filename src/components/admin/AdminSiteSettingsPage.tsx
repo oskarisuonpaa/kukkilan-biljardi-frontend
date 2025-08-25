@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: CLEAN THIS SHIT UP
+
 import { useMemo, useState } from "react";
 
 type NoticeItem = {
@@ -115,6 +117,11 @@ const AdminSiteNoticesSection = ({
           active: temp.active,
         }),
       });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "Create failed");
+        throw new Error(text);
+      }
 
       const created: NoticeItem = await response.json();
 
