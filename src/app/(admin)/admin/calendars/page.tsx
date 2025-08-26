@@ -1,12 +1,12 @@
 import AdminCalendarsPage from "@/components/admin/AdminCalendarsPage";
 
 const fetchCalendars = async () => {
-  const res = await fetch("http://localhost:3001/api/calendars", {
+  const response = await fetch("http://localhost:3000/api/calendars", {
     cache: "no-store",
+    next: { revalidate: 0 },
   });
-  if (!res.ok) throw new Error("Failed to fetch calendars");
-  const data = await res.json();
-  return data;
+  if (!response.ok) throw new Error("Failed to fetch calendars");
+  return response.json();
 };
 
 const Page = async () => {
