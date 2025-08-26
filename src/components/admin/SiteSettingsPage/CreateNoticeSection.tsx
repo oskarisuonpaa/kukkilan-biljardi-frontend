@@ -1,3 +1,5 @@
+"use client";
+
 import SectionWrapper from "@/components/SectionWrapper";
 import { useMemo, useState } from "react";
 
@@ -89,71 +91,65 @@ const CreateNoticeSection = ({
 
   return (
     <SectionWrapper title="Luo uusi tiedote">
-      <div className="mb-6 rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-4">
-        <h3 className="mb-3 text-sm font-semibold text-[var(--text-main)]">
-          Luo uusi tiedote
-        </h3>
+      <div className="grid grid-cols-1 gap-4">
+        <input
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="Otsikko"
+          className="text"
+        />
 
-        <div className="grid grid-cols-1 gap-4">
+        <textarea
+          value={newContent}
+          onChange={(e) => setNewContent(e.target.value)}
+          placeholder="Sisältö"
+          rows={4}
+        />
+
+        <label className="flex items-center gap-2">
           <input
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Otsikko"
-            className="text"
+            type="checkbox"
+            checked={newActive}
+            onChange={(e) => {
+              const next = e.target.checked;
+              if (next && isAtActiveLimit) return; // block enabling at limit
+              setNewActive(next);
+            }}
+            disabled={!canToggleDraftActive}
+            title={
+              isAtActiveLimit && !newActive
+                ? "Maksimissaan 3 aktiivista tiedotetta"
+                : ""
+            }
+            className="h-5 w-5 align-middle accent-[var(--primary)] disabled:opacity-50"
           />
+          <span className="text-[var(--text-secondary)] leading-none">
+            Aktiivinen
+          </span>
+        </label>
 
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder="Sisältö"
-            rows={4}
-          />
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={newActive}
-              onChange={(e) => {
-                const next = e.target.checked;
-                if (next && isAtActiveLimit) return; // block enabling at limit
-                setNewActive(next);
-              }}
-              disabled={!canToggleDraftActive}
-              title={
-                isAtActiveLimit && !newActive
-                  ? "Maksimissaan 3 aktiivista tiedotetta"
-                  : ""
-              }
-              className="h-5 w-5 align-middle accent-[var(--primary)] disabled:opacity-50"
-            />
-            <span className="text-[var(--text-secondary)] leading-none">
-              Aktiivinen
-            </span>
-          </label>
-
-          <div className="flex flex-wrap items-center gap-2 justify-end">
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={!canCreate || creating}
-              className="primary"
-            >
-              {creating ? "Luodaan…" : "Luo tiedote"}
-            </button>
-          </div>
-
-          {!canCreate && (
-            <p className="text-xs text-[var(--danger)]">
-              Otsikko ja sisältö ovat pakollisia.
-            </p>
-          )}
-          {!canCreate && newActive && isAtActiveLimit && (
-            <p className="text-xs text-[var(--danger)]">
-              Et voi aktivoida yli kolmea tiedotetta.
-            </p>
-          )}
+        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={!canCreate || creating}
+            className="primary"
+          >
+            {creating ? "Luodaan…" : "Luo tiedote"}
+          </button>
         </div>
+
+        {!canCreate && (
+          <p className="text-xs text-[var(--danger)]">
+            Otsikko ja sisältö ovat pakollisia.
+          </p>
+        )}
+        {!canCreate && newActive && isAtActiveLimit && (
+          <p className="text-xs text-[var(--danger)]">
+            Et voi aktivoida yli kolmea tiedotetta.
+          </p>
+        )}
       </div>
     </SectionWrapper>
   );
