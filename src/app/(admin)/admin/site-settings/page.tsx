@@ -1,18 +1,9 @@
-import { fetchContactInfo } from "@/app/lib/api";
-import { ContactInfoItem } from "@/app/lib/definitions";
+import { fetchContactInfo, fetchNotices } from "@/app/lib/api";
+import { ContactInfoItem, NoticeItem } from "@/app/lib/definitions";
 import SiteSettingsPage from "@/components/admin/AdminSiteSettingsPage";
 
-const fetchNotices = async () => {
-  const response = await fetch("http://localhost:3000/api/notices", {
-    cache: "no-store",
-    next: { revalidate: 0 },
-  });
-  if (!response.ok) throw new Error("Failed to fetch notices");
-  return response.json();
-};
-
 const Page = async () => {
-  const notices = await fetchNotices();
+  const notices = await fetchNotices<NoticeItem[]>();
   const contactInfo = await fetchContactInfo<ContactInfoItem>();
 
   return (

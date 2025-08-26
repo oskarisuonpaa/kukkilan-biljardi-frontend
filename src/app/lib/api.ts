@@ -28,3 +28,11 @@ export async function apiFetch<T>(
 export async function fetchContactInfo<T = unknown>() {
   return apiFetch<T>("/api/contact-info");
 }
+
+export async function fetchNotices<T = unknown>() {
+  return apiFetch<T>("/api/notices");
+}
+
+export async function fetchOpeningHours<T = unknown>() {
+  return apiFetch<T>("/api/opening-hours");
+}

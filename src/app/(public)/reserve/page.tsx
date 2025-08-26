@@ -1,24 +1,23 @@
+import { fetchNotices, fetchOpeningHours } from "@/app/lib/api";
+import { NoticeItem, OpeningHourItem } from "@/app/lib/definitions";
 import Link from "next/link";
 
-type NoticeItem = {
-  id: number;
-  title: string;
-  content: string;
-  active: boolean;
-};
-
-const fetchNotices = async () => {
-  const response = await fetch("http://localhost:3000/api/notices", {
-    cache: "no-store",
-    next: { revalidate: 0 },
-  });
-  if (!response.ok) throw new Error("Failed to fetch notices");
-  return response.json();
-};
-
 const ReserveLandingPage = async () => {
-  const notices: NoticeItem[] = await fetchNotices();
+  const openingHours: OpeningHourItem[] = await fetchOpeningHours<
+    OpeningHourItem[]
+  >();
+  const notices: NoticeItem[] = await fetchNotices<NoticeItem[]>();
   const activeNotices: NoticeItem[] = notices.filter((notice) => notice.active);
+
+  const weekdays: Record<number, string> = {
+    1: "Ma",
+    2: "Ti",
+    3: "Ke",
+    4: "To",
+    5: "Pe",
+    6: "La",
+    7: "Su",
+  };
 
   return (
     <main>
@@ -79,9 +78,11 @@ const ReserveLandingPage = async () => {
           Voit varata Snookerpöydän seuraavina ajankohtina:
         </p>
         <ul className="list-disc list-inside text-[var(--text-secondary)]">
-          <li>Ma-Pe 10-23</li>
-          <li>La 10-23</li>
-          <li>Su 10-23</li>
+          {openingHours.map(({ weekday, opens_at, closes_at }) => (
+            <li key={weekday}>
+              {weekdays[weekday]} {opens_at.slice(0, 2)}-{closes_at.slice(0, 2)}
+            </li>
+          ))}
         </ul>
       </section>
     </main>
