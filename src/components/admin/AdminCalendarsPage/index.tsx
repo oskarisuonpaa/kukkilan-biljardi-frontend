@@ -22,8 +22,8 @@ const AdminCalendarsPage = ({
       <ManageCalendarsSection
         calendars={calendars}
         setCalendars={setCalendars}
-        baseline={baseline}
-        setBaseline={setBaseline}
+        baselineCalendars={baseline}
+        setBaselineCalendars={setBaseline}
       />
     </main>
   );

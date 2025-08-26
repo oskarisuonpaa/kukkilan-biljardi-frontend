@@ -6,69 +6,95 @@ import SectionWrapper from "@/components/SectionWrapper";
 type ManageCalendarsSectionProps = {
   calendars: CalendarItem[];
   setCalendars: React.Dispatch<React.SetStateAction<CalendarItem[]>>;
-  baseline: CalendarItem[];
-  setBaseline: React.Dispatch<React.SetStateAction<CalendarItem[]>>;
+  baselineCalendars: CalendarItem[];
+  setBaselineCalendars: React.Dispatch<React.SetStateAction<CalendarItem[]>>;
 };
 
 const ManageCalendarsSection = ({
   calendars,
   setCalendars,
-  baseline,
-  setBaseline,
+  baselineCalendars,
+  setBaselineCalendars,
 }: ManageCalendarsSectionProps) => {
-  const handleNameChange = (id: number, value: string) =>
-    setCalendars((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, name: value } : c))
+  const handleNameChange = (calendarId: number, newName: string) =>
+    setCalendars((previousCalendars) =>
+      previousCalendars.map((calendar) =>
+        calendar.id === calendarId ? { ...calendar, name: newName } : calendar
+      )
     );
 
-  const handleActiveChange = (id: number, checked: boolean) =>
-    setCalendars((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, active: checked } : c))
+  const handleActiveChange = (calendarId: number, isActive: boolean) =>
+    setCalendars((previousCalendars) =>
+      previousCalendars.map((calendar) =>
+        calendar.id === calendarId
+          ? { ...calendar, active: isActive }
+          : calendar
+      )
     );
 
-  const handleSubmitRow = async (item: CalendarItem) => {
-    const res = await fetch(`http://localhost:3001/api/calendars/${item.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: item.name, active: item.active }),
-    });
-    const saved: CalendarItem = await res.json();
+  const handleSubmitRow = async (calendar: CalendarItem) => {
+    const response = await fetch(
+      `http://localhost:3001/api/calendars/${calendar.id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: calendar.name, active: calendar.active }),
+      }
+    );
+    const savedCalendar: CalendarItem = await response.json();
     // reflect saved to UI + baseline
-    setCalendars((prev) => prev.map((c) => (c.id === saved.id ? saved : c)));
-    setBaseline((prev) =>
-      prev.some((b) => b.id === saved.id)
-        ? prev.map((b) => (b.id === saved.id ? saved : b))
-        : [saved, ...prev]
+    setCalendars((previousCalendars) =>
+      previousCalendars.map((c) =>
+        c.id === savedCalendar.id ? savedCalendar : c
+      )
+    );
+    setBaselineCalendars((previousBaseline) =>
+      previousBaseline.some((b) => b.id === savedCalendar.id)
+        ? previousBaseline.map((b) =>
+            b.id === savedCalendar.id ? savedCalendar : b
+          )
+        : [savedCalendar, ...previousBaseline]
     );
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (calendarId: number) => {
     if (!confirm("Poistetaanko tämä kalenteri?")) return;
 
-    const prevUI = calendars;
-    const prevBaseline = baseline;
+    const previousCalendars = calendars;
+    const previousBaseline = baselineCalendars;
     // optimistic remove
-    setCalendars((p) => p.filter((c) => c.id !== id));
-    setBaseline((p) => p.filter((b) => b.id !== id));
+    setCalendars((previous) =>
+      previous.filter((calendar) => calendar.id !== calendarId)
+    );
+    setBaselineCalendars((previous) =>
+      previous.filter((calendar) => calendar.id !== calendarId)
+    );
 
     try {
-      const res = await fetch(`http://localhost:3001/api/calendars/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Delete failed");
-    } catch (e) {
-      setCalendars(prevUI);
-      setBaseline(prevBaseline);
-      console.error(e);
+      const response = await fetch(
+        `http://localhost:3001/api/calendars/${calendarId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) throw new Error("Delete failed");
+    } catch (error) {
+      setCalendars(previousCalendars);
+      setBaselineCalendars(previousBaseline);
+      console.error(error);
     }
   };
 
-  const resetRow = (id: number) => {
-    const original = baseline.find((b) => b.id === id);
-    setCalendars((prev) =>
-      original
-        ? prev.map((c) => (c.id === id ? { ...original } : c))
-        : prev.filter((c) => c.id !== id)
+  const resetRow = (calendarId: number) => {
+    const originalCalendar = baselineCalendars.find(
+      (calendar) => calendar.id === calendarId
+    );
+    setCalendars((previousCalendars) =>
+      originalCalendar
+        ? previousCalendars.map((calendar) =>
+            calendar.id === calendarId ? { ...originalCalendar } : calendar
+          )
+        : previousCalendars.filter((calendar) => calendar.id !== calendarId)
     );
   };
 
@@ -81,8 +107,8 @@ const ManageCalendarsSection = ({
             className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-4"
           >
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
+              onSubmit={(event) => {
+                event.preventDefault();
                 handleSubmitRow(calendar);
               }}
               className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_auto_auto]"
@@ -91,7 +117,9 @@ const ManageCalendarsSection = ({
               <input
                 type="text"
                 value={calendar.name}
-                onChange={(e) => handleNameChange(calendar.id, e.target.value)}
+                onChange={(event) =>
+                  handleNameChange(calendar.id, event.target.value)
+                }
                 className="text"
               />
 
@@ -100,8 +128,8 @@ const ManageCalendarsSection = ({
                 <input
                   type="checkbox"
                   checked={calendar.active}
-                  onChange={(e) =>
-                    handleActiveChange(calendar.id, e.target.checked)
+                  onChange={(event) =>
+                    handleActiveChange(calendar.id, event.target.checked)
                   }
                   className="h-5 w-5 align-middle accent-[var(--primary)]"
                 />
