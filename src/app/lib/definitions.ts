@@ -6,3 +6,5 @@ export type NoticeItem = {
 };
 
 export type CalendarItem = { id: number; name: string; active: boolean };
+
+export type ContactInfoItem = { address: string; phone: string; email: string };
