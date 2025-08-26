@@ -49,6 +49,16 @@ const ManageContactInfoSection = ({
     setContactInfo(baseline);
   };
 
+  const noChange =
+    contactInfo.address.trim() === baseline.address.trim() &&
+    contactInfo.email.trim() === baseline.email.trim() &&
+    contactInfo.phone.trim() === baseline.phone.trim();
+
+  const canSubmit =
+    contactInfo.address.trim() !== "" &&
+    contactInfo.email.trim() !== "" &&
+    contactInfo.phone.trim() !== "";
+
   return (
     <SectionWrapper title="Yhteystietojen hallinta">
       {" "}
@@ -83,8 +93,18 @@ const ManageContactInfoSection = ({
           className="text"
         />
 
+        {!canSubmit && (
+          <p className="text-xs text-[var(--danger)]">
+            Yhteystiedot ovat pakollisia.
+          </p>
+        )}
+
         <div className="flex flex-wrap items-center gap-2 justify-end">
-          <button type="submit" className="primary">
+          <button
+            type="submit"
+            className="primary"
+            disabled={!canSubmit || noChange}
+          >
             Lähetä muutokset
           </button>
 

@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Add checks
+
 import { NoticeItem } from "@/app/lib/definitions";
 import SectionWrapper from "@/components/SectionWrapper";
 import { useMemo } from "react";
