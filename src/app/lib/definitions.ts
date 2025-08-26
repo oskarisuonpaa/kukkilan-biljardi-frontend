@@ -4,3 +4,5 @@ export type NoticeItem = {
   content: string;
   active: boolean;
 };
+
+export type CalendarItem = { id: number; name: string; active: boolean };
