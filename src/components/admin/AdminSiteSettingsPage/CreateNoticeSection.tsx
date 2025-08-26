@@ -1,14 +1,8 @@
 "use client";
 
+import { NoticeItem } from "@/app/lib/definitions";
 import SectionWrapper from "@/components/SectionWrapper";
 import { useMemo, useState } from "react";
-
-type NoticeItem = {
-  id: number;
-  title: string;
-  content: string;
-  active: boolean;
-};
 
 type CreateNoticeSectionProps = {
   notices: NoticeItem[];

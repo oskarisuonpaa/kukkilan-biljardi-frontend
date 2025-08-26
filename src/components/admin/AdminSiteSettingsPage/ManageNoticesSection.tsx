@@ -1,35 +1,28 @@
 "use client";
 
-// TODO: CLEAN THIS SHIT UP
+import { NoticeItem } from "@/app/lib/definitions";
+import SectionWrapper from "@/components/SectionWrapper";
+import { useMemo } from "react";
 
-import { useMemo, useState } from "react";
-
-type NoticeItem = {
-  id: number;
-  title: string;
-  content: string;
-  active: boolean;
+type ManageNoticesSectionProps = {
+  notices: NoticeItem[];
+  setNotices: React.Dispatch<React.SetStateAction<NoticeItem[]>>;
+  baseline: NoticeItem[];
+  setBaseline: React.Dispatch<React.SetStateAction<NoticeItem[]>>;
 };
 
-const AdminSiteNoticesSection = ({
-  initialNotices,
-}: {
-  initialNotices: NoticeItem[];
-}) => {
-  // live UI state
-  const [notices, setNotices] = useState<NoticeItem[]>(initialNotices);
-  // server-synced baseline state
-  const [baseline, setBaseline] = useState<NoticeItem[]>(initialNotices);
-
-  // create form state
-
+const ManageNoticesSection = ({
+  notices,
+  setNotices,
+  baseline,
+  setBaseline,
+}: ManageNoticesSectionProps) => {
   const activeCount = useMemo(
     () => notices.filter((n) => n.active).length,
     [notices]
   );
   const isAtActiveLimit = activeCount >= 3;
 
-  // edit handlers
   const handleTitleChange = (id: number, value: string) => {
     setNotices((previous) =>
       previous.map((notice) =>
@@ -54,7 +47,6 @@ const AdminSiteNoticesSection = ({
     );
   };
 
-  // PUT
   const handleSubmitRow = async (item: NoticeItem) => {
     const response = await fetch(`/api/notices/${item.id}`, {
       method: "PUT",
@@ -82,7 +74,6 @@ const AdminSiteNoticesSection = ({
     );
   };
 
-  // DELETE
   const handleDelete = async (id: number) => {
     if (!confirm("Poistetaanko tämä tiedote?")) return;
 
@@ -104,7 +95,6 @@ const AdminSiteNoticesSection = ({
     }
   };
 
-  // Reset row
   const resetRow = (id: number) => {
     const original = baseline.find((item) => item.id === id);
     setNotices((previous) =>
@@ -117,26 +107,7 @@ const AdminSiteNoticesSection = ({
   };
 
   return (
-    <section className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-6 shadow-sm">
-      <header className="mb-4">
-        <h2 className="text-xl font-semibold text-[var(--text-main)]">
-          Tiedotteiden hallinta
-        </h2>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Tässä voit hallita tiedotteita.{" "}
-          <span className="font-bold text-[var(--secondary)]">
-            Tiedotteita voi olla näkyvissä vain kolme.
-          </span>
-        </p>
-        <p className="mt-1 text-xs text-[var(--text-secondary)]">
-          Aktiivisia nyt: <span className="font-semibold">{activeCount}</span> /
-          3
-        </p>
-      </header>
-
-      {/* Create new notice */}
-
-      {/* Existing notices */}
+    <SectionWrapper title="Tiedotteiden hallinta">
       <ul className="space-y-4">
         {notices.map((notice) => {
           const disableActivate = isAtActiveLimit && !notice.active;
@@ -219,21 +190,8 @@ const AdminSiteNoticesSection = ({
           );
         })}
       </ul>
-    </section>
+    </SectionWrapper>
   );
 };
 
-export default function AdminSiteSettingsPage({
-  initialNotices,
-}: {
-  initialNotices: NoticeItem[];
-}) {
-  return (
-    <main>
-      {/* Notices */}
-      <AdminSiteNoticesSection initialNotices={initialNotices} />
-      {/* Opening Times */}
-      {/* Contact Info */}
-    </main>
-  );
-}
+export default ManageNoticesSection;

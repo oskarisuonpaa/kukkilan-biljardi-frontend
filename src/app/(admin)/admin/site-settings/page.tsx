@@ -1,5 +1,4 @@
-import AdminSiteSettingsPage from "@/components/admin/AdminSiteSettingsPage";
-import SiteSettingsPage from "@/components/admin/SiteSettingsPage";
+import SiteSettingsPage from "@/components/admin/AdminSiteSettingsPage";
 
 const fetchNotices = async () => {
   const response = await fetch("http://localhost:3000/api/notices", {
@@ -14,8 +13,6 @@ const Page = async () => {
   const notices = await fetchNotices();
 
   return <SiteSettingsPage initialNotices={notices} />;
-
-  //return <AdminSiteSettingsPage initialNotices={notices} />;
 };
 
 export default Page;
