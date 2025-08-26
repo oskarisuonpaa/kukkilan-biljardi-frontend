@@ -21,16 +21,16 @@ const CreateCalendarSection = ({
     if (!calendarName.trim()) return;
     setIsCreating(true);
 
-    // optimistic temporary calendar
     const tempCalendar: CalendarItem = {
       id: -Date.now(),
       name: calendarName.trim(),
       active: isActive,
     };
+
     setCalendars((prevCalendars) => [tempCalendar, ...prevCalendars]);
 
     try {
-      const response = await fetch("http://localhost:3001/api/calendars", {
+      const response = await fetch("/api/calendars", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -38,22 +38,24 @@ const CreateCalendarSection = ({
           active: tempCalendar.active,
         }),
       });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "Create failed");
+        throw new Error(text);
+      }
+
       const createdCalendar: CalendarItem = await response.json();
 
-      // replace temporary calendar in UI
       setCalendars((prevCalendars) =>
         prevCalendars.map((calendar) =>
           calendar.id === tempCalendar.id ? createdCalendar : calendar
         )
       );
-      // add to baseline
       setBaseline((prevBaseline) => [createdCalendar, ...prevBaseline]);
 
-      // reset form
       setCalendarName("");
       setIsActive(true);
     } catch (error) {
-      // rollback UI
       setCalendars((prevCalendars) =>
         prevCalendars.filter((calendar) => calendar.id !== tempCalendar.id)
       );

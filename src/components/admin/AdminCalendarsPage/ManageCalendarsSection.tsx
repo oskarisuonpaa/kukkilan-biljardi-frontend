@@ -16,10 +16,12 @@ const ManageCalendarsSection = ({
   baselineCalendars,
   setBaselineCalendars,
 }: ManageCalendarsSectionProps) => {
-  const handleNameChange = (calendarId: number, newName: string) =>
+  const handleNameChange = (calendarId: number, calendarName: string) =>
     setCalendars((previousCalendars) =>
       previousCalendars.map((calendar) =>
-        calendar.id === calendarId ? { ...calendar, name: newName } : calendar
+        calendar.id === calendarId
+          ? { ...calendar, name: calendarName }
+          : calendar
       )
     );
 
@@ -33,54 +35,49 @@ const ManageCalendarsSection = ({
     );
 
   const handleSubmitRow = async (calendar: CalendarItem) => {
-    const response = await fetch(
-      `http://localhost:3001/api/calendars/${calendar.id}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: calendar.name, active: calendar.active }),
-      }
-    );
+    const response = await fetch(`/api/calendars/${calendar.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: calendar.name, active: calendar.active }),
+    });
+    if (!response.ok) throw new Error("Failed to update calendar");
     const savedCalendar: CalendarItem = await response.json();
-    // reflect saved to UI + baseline
     setCalendars((previousCalendars) =>
-      previousCalendars.map((c) =>
-        c.id === savedCalendar.id ? savedCalendar : c
+      previousCalendars.map((calendar) =>
+        calendar.id === savedCalendar.id ? savedCalendar : calendar
       )
     );
-    setBaselineCalendars((previousBaseline) =>
-      previousBaseline.some((b) => b.id === savedCalendar.id)
-        ? previousBaseline.map((b) =>
-            b.id === savedCalendar.id ? savedCalendar : b
+    setBaselineCalendars((previousBaselineCalendars) =>
+      previousBaselineCalendars.some(
+        (baselineCalendar) => baselineCalendar.id === savedCalendar.id
+      )
+        ? previousBaselineCalendars.map((baselineCalendar) =>
+            baselineCalendar.id === savedCalendar.id
+              ? savedCalendar
+              : baselineCalendar
           )
-        : [savedCalendar, ...previousBaseline]
+        : [savedCalendar, ...previousBaselineCalendars]
     );
   };
 
   const handleDelete = async (calendarId: number) => {
     if (!confirm("Poistetaanko tämä kalenteri?")) return;
-
     const previousCalendars = calendars;
-    const previousBaseline = baselineCalendars;
-    // optimistic remove
-    setCalendars((previous) =>
-      previous.filter((calendar) => calendar.id !== calendarId)
+    const previousBaselineCalendars = baselineCalendars;
+    setCalendars((previousCalendars) =>
+      previousCalendars.filter((calendar) => calendar.id !== calendarId)
     );
-    setBaselineCalendars((previous) =>
-      previous.filter((calendar) => calendar.id !== calendarId)
+    setBaselineCalendars((previousBaselineCalendars) =>
+      previousBaselineCalendars.filter((calendar) => calendar.id !== calendarId)
     );
-
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/calendars/${calendarId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/calendars/${calendarId}`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Delete failed");
     } catch (error) {
       setCalendars(previousCalendars);
-      setBaselineCalendars(previousBaseline);
+      setBaselineCalendars(previousBaselineCalendars);
       console.error(error);
     }
   };
@@ -113,7 +110,6 @@ const ManageCalendarsSection = ({
               }}
               className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto_auto_auto]"
             >
-              {/* name */}
               <input
                 type="text"
                 value={calendar.name}
@@ -122,8 +118,6 @@ const ManageCalendarsSection = ({
                 }
                 className="text"
               />
-
-              {/* active */}
               <label className="self-center flex items-center gap-2 md:justify-center">
                 <input
                   type="checkbox"
@@ -137,15 +131,11 @@ const ManageCalendarsSection = ({
                   Aktiivinen
                 </span>
               </label>
-
-              {/* save */}
               <div className="flex items-center md:justify-end">
                 <button type="submit" className="primary">
                   Lähetä muutokset
                 </button>
               </div>
-
-              {/* reset & delete */}
               <div className="flex items-center gap-2 md:justify-end">
                 <button
                   type="button"
@@ -154,7 +144,6 @@ const ManageCalendarsSection = ({
                 >
                   Palauta
                 </button>
-
                 <button
                   type="button"
                   onClick={() => handleDelete(calendar.id)}
