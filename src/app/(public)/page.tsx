@@ -1,9 +1,10 @@
-const Home = () => {
-  const mockContactData = {
-    address: "Latojantie 6, 15270 Kukkila",
-    phone: "040 042 1453",
-    email: "vilkasprosnookervaraukset@gmail.com",
-  };
+import { fetchContactInfo } from "../lib/api";
+import { ContactInfoItem } from "../lib/definitions";
+
+// TODO: About us data from backend
+
+const Home = async () => {
+  const contactInfo = await fetchContactInfo<ContactInfoItem>();
 
   const mockAboutUsData = [
     `Tule pelaamaan laadukkaalle snookerpöydällemme Lahdessa. Tilamme
@@ -43,15 +44,15 @@ const Home = () => {
             <span className="font-medium text-[var(--text-main)]">
               Address:
             </span>{" "}
-            {mockContactData.address}
+            {contactInfo.address}
           </li>
           <li>
             <span className="font-medium text-[var(--text-main)]">Phone:</span>{" "}
-            {mockContactData.phone}
+            {contactInfo.phone}
           </li>
           <li>
             <span className="font-medium text-[var(--text-main)]">Email:</span>{" "}
-            {mockContactData.email}
+            {contactInfo.email}
           </li>
         </ul>
       </section>

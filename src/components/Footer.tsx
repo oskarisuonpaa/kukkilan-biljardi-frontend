@@ -1,11 +1,9 @@
+import { fetchContactInfo } from "@/app/lib/api";
+import { ContactInfoItem } from "@/app/lib/definitions";
 import Link from "next/link";
 
-const Footer = () => {
-  const mockContactData = {
-    address: "Latojantie 6, 15270 Kukkila",
-    phone: "040 042 1453",
-    email: "vilkasprosnookervaraukset@gmail.com",
-  };
+const Footer = async () => {
+  const contactInfo = await fetchContactInfo<ContactInfoItem>();
 
   return (
     <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border)]/60 px-6 py-10 text-[var(--text-secondary)]">
@@ -74,9 +72,9 @@ const Footer = () => {
             Contact Information
           </h3>
           <ul className="space-y-2">
-            <li>Address: {mockContactData.address}</li>
-            <li>Phone: {mockContactData.phone}</li>
-            <li>Email: {mockContactData.email}</li>
+            <li>Address: {contactInfo.address}</li>
+            <li>Phone: {contactInfo.phone}</li>
+            <li>Email: {contactInfo.email}</li>
           </ul>
         </div>
       </div>
