@@ -7,15 +7,8 @@ const Home = async () => {
   const contactInfo = await fetchContactInfo<ContactInfoItem>();
 
   const mockAboutUsData = [
-    `Tule pelaamaan laadukkaalle snookerpöydällemme Lahdessa. Tilamme
-            täyttävät kilpapelaajien standardit. Täällä on rauhallinen ilmapiiri
-            pelata tätä hienoa herrasmieslajia.`,
-    `Safari Rally Café pitää huolen, että tarjolla on erittäin laadukasta
-            kahvia, myös espressopohjaisia kahveja. Juomapuolelta löytyy
-            valikoituja viinejä ja oluita sekä artesaanilimonadeja.`,
-    `Kahvin tarinaa kuulet lisää paikan päällä, mutta kerrottakoon, että
-            kun juot tätä laadukasta Kenia-kahvia, olet makunautinnon lisäksi
-            mukana istuttamassa puita Keniaan!`,
+    `Kun haluat pelata Snookeria, Kaisaa tai Poolia viihtyisässä ja rauhallisessa ympäristössä, tämä biljardisali on sinulle!
+Tervetuloa!`,
   ];
 
   return (
