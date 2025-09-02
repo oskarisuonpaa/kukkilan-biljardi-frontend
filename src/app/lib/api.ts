@@ -36,3 +36,11 @@ export async function fetchNotices<T = unknown>() {
 export async function fetchOpeningHours<T = unknown>() {
   return apiFetch<T>("/api/opening-hours");
 }
+
+export async function fetchCalendars<T = unknown>() {
+  return apiFetch<T>("/api/calendars");
+}
+
+export async function fetchBookings<T = unknown>(calendarId: number) {
+  return apiFetch<T>(`/api/calendars/${calendarId}/bookings`);
+}

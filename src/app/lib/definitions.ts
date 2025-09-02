@@ -14,3 +14,24 @@ export type OpeningHourItem = {
   opens_at: string;
   closes_at: string;
 };
+
+export type BookingItem = {
+  id: number;
+  calendar_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  notes?: string;
+  start: string;
+  end: string;
+};
+
+export type CreateBookingParams = {
+  calendarId: string;
+  name: string;
+  email: string;
+  phone: string;
+  notes?: string;
+  start: string;
+  end: string;
+};
