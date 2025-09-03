@@ -15,22 +15,24 @@ export function TimeGutter({
   slotsPerHour,
   rowHeight,
 }: TimeGutterProps) {
+  const totalHours = endHour - startHour + 1;
+
   return (
-    <div>
-      {Array.from({ length: endHour - startHour + 1 }, (_, i) => {
-        const h = startHour + i;
-        const d = atDate(date, h, 0);
+    <div aria-hidden>
+      {Array.from({ length: totalHours }, (_, index) => {
+        const hour = startHour + index;
+        const labelDate = atDate(date, hour, 0);
         return (
           <div
-            key={h}
+            key={hour}
             style={{ height: rowHeight * slotsPerHour }}
             className="relative"
           >
             <div
-              className="absolute -translate-y-1/2 text-xs text-[var(--text-secondary)]"
-              style={{ top: 0 }}
+              className="absolute top-0 -translate-y-1/2 text-xs text-muted"
+              aria-label={formatTime(labelDate)}
             >
-              {formatTime(d)}
+              {formatTime(labelDate)}
             </div>
           </div>
         );

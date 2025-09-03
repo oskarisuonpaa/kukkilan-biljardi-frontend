@@ -12,12 +12,11 @@ export function atDate(date: Date, h: number, m: number) {
 }
 
 export function toLocalISO(d: Date) {
-  // Keep local wall time but output ISO (with local offset)
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
 }
 
 export function formatTime(d: Date) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("fi-FI", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(d);

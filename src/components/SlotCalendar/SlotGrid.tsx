@@ -26,184 +26,219 @@ export function SlotGrid({
   const totalSlots = times.length;
   const gridRef = useRef<HTMLDivElement | null>(null);
 
-  // Disabled slots from events
-  const disabledIdx = useMemo(() => {
-    const set = new Set<number>();
-    for (const e of events) {
-      const s = new Date(e.start);
-      const ed = new Date(e.end);
-      times.forEach((t, i) => {
-        const tEnd = new Date(t.getTime() + slotMinutes * 60000);
-        if (rangesOverlap(t, tEnd, s, ed)) set.add(i);
+  // Build a set of disabled slot indices based on existing events
+  const disabledIndices = useMemo(() => {
+    const indices = new Set<number>();
+    for (const event of events) {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      times.forEach((slotStart, index) => {
+        const slotEnd = new Date(slotStart.getTime() + slotMinutes * 60000);
+        if (rangesOverlap(slotStart, slotEnd, eventStart, eventEnd)) {
+          indices.add(index);
+        }
       });
     }
-    return set;
+    return indices;
   }, [events, slotMinutes, times]);
 
-  // Drag state (anchor = mousedown slot, hover = current slot under pointer)
-  const [anchor, setAnchor] = useState<number | null>(null);
-  const [hover, setHover] = useState<number | null>(null);
-  const dragging = anchor !== null && hover !== null;
+  // Drag state
+  const [anchorIndex, setAnchorIndex] = useState<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const isDragging = anchorIndex !== null && hoverIndex !== null;
 
   const clearDrag = () => {
-    setAnchor(null);
-    setHover(null);
+    setAnchorIndex(null);
+    setHoverIndex(null);
   };
 
   // Map pointer Y → slot index
-  const indexFromY = (clientY: number) => {
+  const indexFromClientY = (clientY: number) => {
     const rect = gridRef.current!.getBoundingClientRect();
-    let idx = Math.floor((clientY - rect.top) / rowHeight);
-    if (idx < 0) idx = 0;
-    if (idx > totalSlots - 1) idx = totalSlots - 1;
-    return idx;
+    let index = Math.floor((clientY - rect.top) / rowHeight);
+    if (index < 0) index = 0;
+    if (index > totalSlots - 1) index = totalSlots - 1;
+    return index;
   };
 
-  // Walk from `from` toward `to`, stopping BEFORE any disabled/edge
+  // Walk from `from` toward `to`, stop before any disabled index or edge
   const contiguousToward = (from: number, to: number) => {
     const step = to >= from ? 1 : -1;
     let last = from;
-    for (let k = from; k !== to + step; k += step) {
-      if (k < 0 || k >= totalSlots) break;
-      if (disabledIdx.has(k)) break;
-      last = k;
+    for (let i = from; i !== to + step; i += step) {
+      if (i < 0 || i >= totalSlots) break;
+      if (disabledIndices.has(i)) break;
+      last = i;
     }
     return last;
   };
 
-  const onPointerDown = (e: React.PointerEvent) => {
+  const handlePointerDown = (event: React.PointerEvent) => {
     if (!selectable) return;
-    const idx = indexFromY(e.clientY);
-    if (disabledIdx.has(idx)) return;
-    setAnchor(idx);
-    setHover(idx);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    e.preventDefault();
+    const index = indexFromClientY(event.clientY);
+    if (disabledIndices.has(index)) return;
+    setAnchorIndex(index);
+    setHoverIndex(index);
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    event.preventDefault();
   };
 
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (anchor === null) return;
-    const raw = indexFromY(e.clientY);
-    setHover(contiguousToward(anchor, raw));
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (anchorIndex === null) return;
+    const rawIndex = indexFromClientY(event.clientY);
+    setHoverIndex(contiguousToward(anchorIndex, rawIndex));
   };
 
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (anchor === null || hover === null) return;
-    const sIdx = Math.min(anchor, hover);
-    const eIdx = Math.max(anchor, hover) + 1; // exclusive
-    if (eIdx > sIdx && onSelect) {
-      const start = times[sIdx];
-      const end = new Date(times[eIdx - 1].getTime() + slotMinutes * 60000);
+  const handlePointerUp = (event: React.PointerEvent) => {
+    if (anchorIndex === null || hoverIndex === null) return;
+    const startIndex = Math.min(anchorIndex, hoverIndex);
+    const endIndexExclusive = Math.max(anchorIndex, hoverIndex) + 1;
+
+    if (endIndexExclusive > startIndex && onSelect) {
+      const start = times[startIndex];
+      const end = new Date(
+        times[endIndexExclusive - 1].getTime() + slotMinutes * 60000
+      );
       onSelect({ start: start.toISOString(), end: end.toISOString() });
     }
+
     clearDrag();
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
   };
 
-  // Visual dragged band
-  const dragged = dragging
-    ? { sIdx: Math.min(anchor!, hover!), eIdx: Math.max(anchor!, hover!) + 1 }
+  const dragged = isDragging
+    ? {
+        startIndex: Math.min(anchorIndex!, hoverIndex!),
+        endIndexExclusive: Math.max(anchorIndex!, hoverIndex!) + 1,
+      }
     : null;
 
   return (
     <div
       ref={gridRef}
-      className="relative rounded-lg border bg-[var(--bg-tertiary)] touch-none" // touch-none = prevent scroll while dragging
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      className="relative rounded-lg border border-subtle bg-surface-alt touch-none"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       onPointerCancel={clearDrag}
       onLostPointerCapture={clearDrag}
+      role="grid"
+      aria-label="Aikaruudukko"
     >
-      {/* Horizontal lines */}
-      {Array.from({ length: totalSlots + 1 }, (_, i) => (
+      {/* Horizontal slot lines */}
+      {Array.from({ length: totalSlots + 1 }, (_, index) => (
         <div
-          key={i}
-          style={{ top: i * rowHeight }}
-          className="pointer-events-none absolute left-0 right-0 h-px bg-[var(--border)]/60"
+          key={index}
+          style={{ top: index * rowHeight }}
+          className="pointer-events-none absolute left-0 right-0 h-px bg-[color-mix(in_oklab, var(--border)_60%, transparent)]"
         />
       ))}
 
-      {/* Slot rows (no per-row handlers; grid-level pointer capture drives the drag) */}
+      {/* Interactive rows (grid-level pointer handlers manage the drag) */}
       <div>
-        {times.map((t, i) => {
-          const disabled = disabledIdx.has(i);
-          const sel = !!dragged && i >= dragged.sIdx && i < dragged.eIdx;
+        {times.map((slotStart, index) => {
+          const isDisabled = disabledIndices.has(index);
+          const isSelected =
+            !!dragged &&
+            index >= dragged.startIndex &&
+            index < dragged.endIndexExclusive;
+
           return (
             <div
-              key={i}
+              key={index}
               style={{ height: rowHeight }}
               className={[
-                "border-b border-transparent px-2 text-xs flex items-center",
-                disabled
-                  ? "bg-[color:oklch(0.23_0.03_250_/0.25)] cursor-not-allowed"
-                  : "hover:bg-[var(--bg)] cursor-pointer",
-                sel ? "bg-[var(--primary-subtle)]/40" : "",
+                "flex items-center border-b border-transparent px-2 text-xs",
+                isDisabled
+                  ? "cursor-not-allowed bg-[color-mix(in_oklab,var(--bg-secondary)_85%,white_15%)]"
+                  : "cursor-pointer hover:bg-surface",
+                isSelected
+                  ? "bg-[color-mix(in_oklab,var(--primary-subtle)_40%,transparent)]"
+                  : "",
               ].join(" ")}
-              title={formatTime(t)}
+              title={formatTime(slotStart)}
+              role="row"
+              aria-disabled={isDisabled || undefined}
+              aria-selected={isSelected || undefined}
             />
           );
         })}
       </div>
 
-      {/* Existing event pills */}
-      {events.map((e, idx) => {
-        const s = new Date(e.start);
-        const ed = new Date(e.end);
-        const startIdx = Math.max(
+      {/* Existing events */}
+      {events.map((event, index) => {
+        const start = new Date(event.start);
+        const end = new Date(event.end);
+
+        const startIndex = Math.max(
           0,
           Math.floor(
-            ((s.getHours() - startHour) * 60 + s.getMinutes()) / slotMinutes
+            ((start.getHours() - startHour) * 60 + start.getMinutes()) /
+              slotMinutes
           )
         );
-        const endIdx = Math.min(
+        const endIndexExclusive = Math.min(
           totalSlots,
           Math.ceil(
-            ((ed.getHours() - startHour) * 60 + ed.getMinutes()) / slotMinutes
+            ((end.getHours() - startHour) * 60 + end.getMinutes()) / slotMinutes
           )
         );
-        if (endIdx <= 0 || startIdx >= totalSlots) return null;
-        const top = startIdx * rowHeight;
-        const height = Math.max(rowHeight / 2, (endIdx - startIdx) * rowHeight);
+
+        if (endIndexExclusive <= 0 || startIndex >= totalSlots) return null;
+
+        const top = startIndex * rowHeight;
+        const height = Math.max(
+          rowHeight / 2,
+          (endIndexExclusive - startIndex) * rowHeight
+        );
+
         return (
           <div
-            key={idx}
-            className="pointer-events-none absolute left-2 right-2 rounded-md bg-[var(--secondary)]/25 border border-[var(--secondary)]/50"
+            key={index}
+            className="pointer-events-none absolute left-2 right-2 rounded-md border border-[color-mix(in_oklab,var(--secondary)_50%,transparent)] bg-[color-mix(in_oklab,var(--secondary)_25%,transparent)]"
             style={{ top, height }}
-            title={`${formatTime(s)} – ${formatTime(ed)}${
-              e.title ? " • " + e.title : ""
+            title={`${formatTime(start)} – ${formatTime(end)}${
+              event.title ? " • " + event.title : ""
             }`}
+            role="presentation"
           />
         );
       })}
 
-      {/* Persistent selected range overlay */}
+      {/* Persistent selected range */}
       {selectedRange &&
         (() => {
-          const s = new Date(selectedRange.start);
-          const ed = new Date(selectedRange.end);
-          const startIdx = Math.max(
+          const start = new Date(selectedRange.start);
+          const end = new Date(selectedRange.end);
+
+          const startIndex = Math.max(
             0,
             Math.floor(
-              ((s.getHours() - startHour) * 60 + s.getMinutes()) / slotMinutes
+              ((start.getHours() - startHour) * 60 + start.getMinutes()) /
+                slotMinutes
             )
           );
-          const endIdx = Math.min(
+          const endIndexExclusive = Math.min(
             totalSlots,
             Math.ceil(
-              ((ed.getHours() - startHour) * 60 + ed.getMinutes()) / slotMinutes
+              ((end.getHours() - startHour) * 60 + end.getMinutes()) /
+                slotMinutes
             )
           );
-          if (endIdx <= 0 || startIdx >= totalSlots) return null;
-          const top = startIdx * rowHeight;
+
+          if (endIndexExclusive <= 0 || startIndex >= totalSlots) return null;
+
+          const top = startIndex * rowHeight;
           const height = Math.max(
             rowHeight / 2,
-            (endIdx - startIdx) * rowHeight
+            (endIndexExclusive - startIndex) * rowHeight
           );
+
           return (
             <div
-              className="pointer-events-none absolute left-2 right-2 rounded-md bg-[var(--primary-subtle)]/40 border border-[var(--primary-subtle)]/60"
+              className="pointer-events-none absolute left-2 right-2 rounded-md border border-[color-mix(in_oklab,var(--primary-subtle)_60%,transparent)] bg-[color-mix(in_oklab,var(--primary-subtle)_40%,transparent)]"
               style={{ top, height }}
+              role="presentation"
             />
           );
         })()}

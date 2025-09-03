@@ -23,7 +23,7 @@ const BookingsToolbar = ({
   onToggleSortDirection,
 }: BookingsToolbarProps) => {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-center">
       <label className="flex items-center gap-2">
         <span className="text-sm text-[var(--text-muted)]">Kalenteri</span>
         <select
@@ -42,7 +42,7 @@ const BookingsToolbar = ({
 
       <input
         type="search"
-        placeholder="Haku: nimi, email, puh., muistiinpanot"
+        placeholder="Haku: nimi, email, puh., lisätiedot"
         className="w-full sm:w-72 rounded-lg border px-3 py-2"
         value={searchQuery}
         onChange={(event) => onChangeSearchQuery(event.target.value)}

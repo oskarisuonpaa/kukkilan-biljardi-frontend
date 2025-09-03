@@ -127,9 +127,7 @@ const CreateBookingSection = ({
           <label className="flex items-center gap-2">
             <span className="text-sm text-[var(--text-muted)]">Kalenteri</span>
             <select
-              className="rounded-lg
-      border border-[var(--border)]/60 bg-[var(--bg-secondary)] px-4 py-2 font-medium text-[var(--text-main)] focus:outline-none
-                               "
+              className="input-field font-medium"
               value={selectedCalendar}
               onChange={(e) => setSelectedCalendar(Number(e.target.value))}
             >
@@ -142,42 +140,43 @@ const CreateBookingSection = ({
             </select>
           </label>
 
-          {/* ✅ Selected time ABOVE the name field */}
-          <div className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-2">
+          {/* Selected time */}
+          <div className="card p-2">
             <div className="mb-1 font-medium">Valittu aika</div>
             {pendingRange ? (
               <div>
-                {new Date(pendingRange.start).toLocaleString()} –{" "}
-                {new Date(pendingRange.end).toLocaleString()}
+                {new Date(pendingRange.start).toLocaleString("fi-FI")} -{" "}
+                {new Date(pendingRange.end).toLocaleString("fi-FI")}
               </div>
             ) : (
               <div className="text-[var(--text-secondary)]">Ei valintaa</div>
             )}
           </div>
 
-          {/* Name, then the rest */}
+          {/* Fields */}
           <input
-            className="text"
+            className="input-field"
             placeholder="Nimi *"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
           <input
-            className="text"
+            className="input-field"
             placeholder="Sähköposti *"
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
           />
           <input
-            className="text"
+            className="input-field"
             placeholder="Puhelin *"
             type="tel"
             value={newPhone}
             onChange={(e) => setNewPhone(e.target.value)}
           />
           <textarea
-            placeholder="Muistiinpanot"
+            className="input-field"
+            placeholder="Lisätiedot"
             value={newNotes}
             onChange={(e) => setNewNotes(e.target.value)}
           />
@@ -187,11 +186,15 @@ const CreateBookingSection = ({
               type="button"
               onClick={handleCreateBooking}
               disabled={!canCreate}
-              className="primary"
+              className="button button-primary"
             >
               {creating ? "Luodaan…" : "Luo varaus"}
             </button>
-            <button type="button" onClick={resetForm} className="danger">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="button button-danger"
+            >
               Tyhjennä
             </button>
           </div>

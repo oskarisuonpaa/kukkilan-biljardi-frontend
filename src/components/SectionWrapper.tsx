@@ -11,7 +11,7 @@ const SectionWrapper: React.FC<SectionWrapperProps> = ({
   <section>
     <header>
       <h2>{title}</h2>
-      <div className="section-underline" aria-hidden="true" />
+      <div className="section-underline mb-6" aria-hidden="true" />
       {headerChildren}
     </header>
     {children}

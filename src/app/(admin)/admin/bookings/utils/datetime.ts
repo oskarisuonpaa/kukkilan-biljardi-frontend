@@ -1,5 +1,5 @@
 const formatDayWithWeekday = (date: Date): string => {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("fi-FI", {
     weekday: "short",
     day: "2-digit",
     month: "short",
@@ -8,7 +8,7 @@ const formatDayWithWeekday = (date: Date): string => {
 };
 
 const formatTime = (date: Date): string => {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("fi-FI", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);

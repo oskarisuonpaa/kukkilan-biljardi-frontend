@@ -1,7 +1,9 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
 import { BookingItem, CalendarItem } from "@/app/lib/definitions";
 import SectionWrapper from "@/components/SectionWrapper";
 import useBookingsFilter, { SortDirection } from "../hooks/useBookingsFilter";
-import { useCallback, useState } from "react";
 import BookingsToolbar from "./BookingsToolbar";
 import { formatDayWithWeekday, formatTime } from "../utils/datetime";
 import BookingRowActions from "./BookingRowActions";
@@ -14,20 +16,27 @@ export type BookingsListProps = {
   ) => void;
 };
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+  "http://localhost:3001";
+
 async function deleteBookingFromServer(id: number): Promise<Response> {
-  return fetch(`http://localhost:3001/api/bookings/${id}`, {
-    method: "DELETE",
-  });
+  return fetch(`${API_BASE}/api/bookings/${id}`, { method: "DELETE" });
 }
 
-const BookingsList = ({
+export default function BookingsList({
   calendars,
   allBookings,
   setAllBookings,
-}: BookingsListProps) => {
-  const [selectedCalendarId, setSelectedCalendarId] = useState<number>(
-    calendars[0]?.id ?? 0
+}: BookingsListProps) {
+  // Prefer first active calendar; fallback to first; else 0
+  const defaultCalendarId = useMemo(
+    () => calendars.find((c) => c.active)?.id ?? calendars[0]?.id ?? 0,
+    [calendars]
   );
+
+  const [selectedCalendarId, setSelectedCalendarId] =
+    useState<number>(defaultCalendarId);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -39,7 +48,7 @@ const BookingsList = ({
   );
 
   const handleToggleSortDirection = useCallback(
-    () => setSortDirection((previous) => (previous === "asc" ? "desc" : "asc")),
+    () => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc")),
     []
   );
 
@@ -82,40 +91,38 @@ const BookingsList = ({
       }
     >
       <div className="px-6 pb-6">
-        <div className="mb-3 text-sm text-[var(--text-muted)]">
-          {totalCount} booking{totalCount === 1 ? "" : "s"} in “
+        <div className="mb-3 text-sm text-muted">
+          {totalCount} varaus{totalCount === 1 ? "" : "ta"} kalenterissa “
           {selectedCalendarName}”
         </div>
+
         {Object.entries(groups).map(([dayKey, items]) => {
           const day = new Date(`${dayKey}T00:00:00`);
           return (
-            <section key={dayKey} className="space-y-3 mb-8">
-              <h3 className="text-sm font-semibold tracking-wide text-[var(--text-muted)]">
-                {formatDayWithWeekday(day)} • {items.length} item
-                {items.length === 1 ? "" : "s"}
+            <section key={dayKey} className="space-y-3 mb-8 card p-0">
+              <h3 className="px-6 pt-4 text-sm font-semibold tracking-wide text-muted">
+                {formatDayWithWeekday(day)} • {items.length} rivi
+                {items.length === 1 ? "" : "ä"}
               </h3>
 
               {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto rounded-xl border border-[var(--border)]">
-                <table className="w-full text-sm">
-                  <thead className="bg-[var(--bg)]">
-                    <tr className="[&>th]:px-4 [&>th]:py-3 text-left">
-                      <th>Time</th>
-                      <th>Name</th>
-                      <th>Contact</th>
-                      <th>Notes</th>
-                      <th className="text-right">Actions</th>
+              <div className="hidden md:block overflow-x-auto rounded-xl border border-subtle m-6 mt-2">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Aika</th>
+                      <th>Nimi</th>
+                      <th>Yhteystiedot</th>
+                      <th>Lisätiedot</th>
+                      <th className="text-right">Toiminnot</th>
                     </tr>
                   </thead>
-                  <tbody className="[&>tr:not(:last-child)]:border-b">
+                  <tbody>
                     {items.map((booking) => {
                       const startDate = new Date(booking.start);
                       const endDate = new Date(booking.end);
                       return (
-                        <tr
-                          key={booking.id}
-                          className="[&>td]:px-4 [&>td]:py-3"
-                        >
+                        <tr key={booking.id}>
                           <td className="whitespace-nowrap">
                             {formatTime(startDate)} – {formatTime(endDate)}
                           </td>
@@ -142,9 +149,7 @@ const BookingsList = ({
                           </td>
                           <td className="max-w-[28rem]">
                             {booking.notes ?? (
-                              <span className="text-[var(--text-muted)]">
-                                —
-                              </span>
+                              <span className="text-muted">—</span>
                             )}
                           </td>
                           <td className="text-right">
@@ -158,15 +163,16 @@ const BookingsList = ({
                   </tbody>
                 </table>
               </div>
+
               {/* Mobile cards */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-3 px-6 pb-6">
                 {items.map((booking) => {
                   const startDate = new Date(booking.start);
                   const endDate = new Date(booking.end);
                   return (
-                    <article key={booking.id} className="rounded-xl border p-4">
+                    <article key={booking.id} className="card p-4">
                       <div className="flex items-center justify-between">
-                        <div className="text-sm text-[var(--text-muted)]">
+                        <div className="text-sm text-muted">
                           {formatTime(startDate)} – {formatTime(endDate)}
                         </div>
                         <BookingRowActions
@@ -196,9 +202,7 @@ const BookingsList = ({
                       </div>
                       <div className="mt-2 text-sm">
                         {booking.notes ?? (
-                          <span className="text-[var(--text-muted)]">
-                            No notes
-                          </span>
+                          <span className="text-muted">Ei lisätietoja</span>
                         )}
                       </div>
                     </article>
@@ -211,6 +215,4 @@ const BookingsList = ({
       </div>
     </SectionWrapper>
   );
-};
-
-export default BookingsList;
+}
