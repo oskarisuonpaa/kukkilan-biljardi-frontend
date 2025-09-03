@@ -1,41 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import { CalendarItem } from "@/app/lib/definitions";
 import SectionWrapper from "@/components/SectionWrapper";
-import { useState } from "react";
 
 type CreateCalendarSectionProps = {
   setCalendars: React.Dispatch<React.SetStateAction<CalendarItem[]>>;
   setBaseline: React.Dispatch<React.SetStateAction<CalendarItem[]>>;
 };
 
-const CreateCalendarSection = ({
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+
+export default function CreateCalendarSection({
   setCalendars,
   setBaseline,
-}: CreateCalendarSectionProps) => {
+}: CreateCalendarSectionProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [calendarName, setCalendarName] = useState("");
   const [isActive, setIsActive] = useState(true);
 
-  const handleCreate = async () => {
-    if (!calendarName.trim()) return;
+  const canCreate = calendarName.trim().length > 0;
+
+  async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canCreate) return;
+
     setIsCreating(true);
 
-    const tempCalendar: CalendarItem = {
+    const optimistic: CalendarItem = {
       id: -Date.now(),
       name: calendarName.trim(),
       active: isActive,
     };
 
-    setCalendars((prevCalendars) => [tempCalendar, ...prevCalendars]);
+    setCalendars((prev) => [optimistic, ...prev]);
 
     try {
-      const response = await fetch("/api/calendars", {
+      const response = await fetch(`${API_BASE}/api/calendars`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: tempCalendar.name,
-          active: tempCalendar.active,
+          name: optimistic.name,
+          active: optimistic.active,
         }),
       });
 
@@ -44,72 +50,75 @@ const CreateCalendarSection = ({
         throw new Error(text);
       }
 
-      const createdCalendar: CalendarItem = await response.json();
+      const created: CalendarItem = await response.json();
 
-      setCalendars((prevCalendars) =>
-        prevCalendars.map((calendar) =>
-          calendar.id === tempCalendar.id ? createdCalendar : calendar
-        )
+      setCalendars((prev) =>
+        prev.map((c) => (c.id === optimistic.id ? created : c))
       );
-      setBaseline((prevBaseline) => [createdCalendar, ...prevBaseline]);
+      setBaseline((prev) => [created, ...prev]);
 
       setCalendarName("");
       setIsActive(true);
     } catch (error) {
-      setCalendars((prevCalendars) =>
-        prevCalendars.filter((calendar) => calendar.id !== tempCalendar.id)
-      );
       console.error("Create failed", error);
+      setCalendars((prev) => prev.filter((c) => c.id !== optimistic.id));
     } finally {
       setIsCreating(false);
     }
-  };
+  }
+
+  function handleReset() {
+    setCalendarName("");
+    setIsActive(true);
+  }
 
   return (
     <SectionWrapper title="Luo uusi varauskalenteri">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
-        <label className="flex flex-col gap-2">
-          <span className="text-[var(--text-main)]">Kalenterin nimi</span>
+      <form
+        className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]"
+        onSubmit={handleCreate}
+        noValidate
+      >
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-muted">Kalenterin nimi</label>
           <input
             value={calendarName}
             onChange={(e) => setCalendarName(e.target.value)}
             placeholder="Esim. Snooker 1"
-            className="text"
+            className="input-field"
+            required
           />
-          <label className="mt-1 flex items-center gap-2 text-[var(--text-secondary)]">
+
+          <label className="mt-1 flex items-center gap-2 text-muted">
             <input
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="h-5 w-5 align-middle accent-[var(--primary)]"
+              className="h-5 w-5 align-middle"
+              style={{ accentColor: "var(--primary)" }}
             />
             Aktiivinen
           </label>
-        </label>
+        </div>
 
         <div className="flex items-end gap-2 md:justify-end">
           <button
-            type="button"
-            disabled={isCreating || !calendarName.trim()}
-            onClick={handleCreate}
-            className="primary"
+            type="submit"
+            disabled={!canCreate || isCreating}
+            aria-disabled={!canCreate || isCreating}
+            className="button button-primary"
           >
             {isCreating ? "Luodaan…" : "Luo kalenteri"}
           </button>
           <button
             type="button"
-            onClick={() => {
-              setCalendarName("");
-              setIsActive(true);
-            }}
-            className="danger"
+            onClick={handleReset}
+            className="button button-danger"
           >
             Tyhjennä
           </button>
         </div>
-      </div>
+      </form>
     </SectionWrapper>
   );
-};
-
-export default CreateCalendarSection;
+}

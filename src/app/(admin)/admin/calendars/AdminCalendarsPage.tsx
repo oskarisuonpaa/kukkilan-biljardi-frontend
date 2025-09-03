@@ -1,15 +1,15 @@
 "use client";
 
-import { CalendarItem } from "@/app/lib/definitions";
-import CreateCalendarSection from "./CreateCalendarSection";
 import { useState } from "react";
-import ManageCalendarsSection from "./ManageCalendarsSection";
+import { CalendarItem } from "@/app/lib/definitions";
+import ManageCalendarsSection from "./components/ManageCalendarsSection";
+import CreateCalendarSection from "./components/CreateCalendarSection";
 
-const AdminCalendarsPage = ({
+export default function AdminCalendarsPage({
   initialCalendars,
 }: {
   initialCalendars: CalendarItem[];
-}) => {
+}) {
   const [calendars, setCalendars] = useState<CalendarItem[]>(initialCalendars);
   const [baseline, setBaseline] = useState<CalendarItem[]>(initialCalendars);
 
@@ -27,6 +27,4 @@ const AdminCalendarsPage = ({
       />
     </main>
   );
-};
-
-export default AdminCalendarsPage;
+}
