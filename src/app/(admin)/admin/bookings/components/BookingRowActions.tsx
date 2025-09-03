@@ -1,7 +1,7 @@
 "use client";
 const BookingRowActions = ({ onDelete }: { onDelete: () => void }) => {
   return (
-    <button type="button" onClick={onDelete} className="danger">
+    <button type="button" onClick={onDelete} className="button button-danger">
       Poista
     </button>
   );

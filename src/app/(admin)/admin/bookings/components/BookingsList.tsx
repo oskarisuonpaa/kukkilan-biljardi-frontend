@@ -96,7 +96,7 @@ const BookingsList = ({
               </h3>
 
               {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto rounded-xl border">
+              <div className="hidden md:block overflow-x-auto rounded-xl border border-[var(--border)]">
                 <table className="w-full text-sm">
                   <thead className="bg-[var(--bg)]">
                     <tr className="[&>th]:px-4 [&>th]:py-3 text-left">
