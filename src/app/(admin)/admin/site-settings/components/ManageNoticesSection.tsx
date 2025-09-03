@@ -1,10 +1,8 @@
 "use client";
 
-// TODO: Add checks
-
+import { useMemo } from "react";
 import { NoticeItem } from "@/app/lib/definitions";
 import SectionWrapper from "@/components/SectionWrapper";
-import { useMemo } from "react";
 
 type ManageNoticesSectionProps = {
   notices: NoticeItem[];
@@ -13,12 +11,14 @@ type ManageNoticesSectionProps = {
   setBaseline: React.Dispatch<React.SetStateAction<NoticeItem[]>>;
 };
 
-const ManageNoticesSection = ({
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+
+export default function ManageNoticesSection({
   notices,
   setNotices,
   baseline,
   setBaseline,
-}: ManageNoticesSectionProps) => {
+}: ManageNoticesSectionProps) {
   const activeCount = useMemo(
     () => notices.filter((n) => n.active).length,
     [notices]
@@ -26,54 +26,54 @@ const ManageNoticesSection = ({
   const isAtActiveLimit = activeCount >= 3;
 
   const handleTitleChange = (id: number, value: string) => {
-    setNotices((previous) =>
-      previous.map((notice) =>
+    setNotices((prev) =>
+      prev.map((notice) =>
         notice.id === id ? { ...notice, title: value } : notice
       )
     );
   };
 
   const handleContentChange = (id: number, value: string) => {
-    setNotices((previous) =>
-      previous.map((notice) =>
+    setNotices((prev) =>
+      prev.map((notice) =>
         notice.id === id ? { ...notice, content: value } : notice
       )
     );
   };
 
   const handleActiveChange = (id: number, value: boolean) => {
-    setNotices((previous) =>
-      previous.map((notice) =>
+    setNotices((prev) =>
+      prev.map((notice) =>
         notice.id === id ? { ...notice, active: value } : notice
       )
     );
   };
 
   const handleSubmitRow = async (item: NoticeItem) => {
-    const response = await fetch(`/api/notices/${item.id}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        title: item.title,
-        content: item.content,
-        active: item.active,
-      }),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      const response = await fetch(`${API_BASE}/api/notices/${item.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: item.title,
+          content: item.content,
+          active: item.active,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to update notice");
 
-    if (!response.ok) {
-      throw new Error("Failed to update notice");
+      const saved: NoticeItem = await response.json();
+
+      setNotices((prev) => prev.map((n) => (n.id === saved.id ? saved : n)));
+      setBaseline((prev) =>
+        prev.some((b) => b.id === saved.id)
+          ? prev.map((b) => (b.id === saved.id ? saved : b))
+          : [saved, ...prev]
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Tallennus epäonnistui. Yritä uudelleen.");
     }
-
-    const saved: NoticeItem = await response.json();
-
-    setNotices((previous) =>
-      previous.map((notice) => (notice.id === saved.id ? saved : notice))
-    );
-    setBaseline((previous) =>
-      previous.some((b) => b.id === saved.id)
-        ? previous.map((b) => (b.id === saved.id ? saved : b))
-        : [saved, ...previous]
-    );
   };
 
   const handleDelete = async (id: number) => {
@@ -82,29 +82,29 @@ const ManageNoticesSection = ({
     const previousUI = notices;
     const previousBaseline = baseline;
 
-    setNotices((notices) => notices.filter((notice) => notice.id !== id));
-    setBaseline((notices) => notices.filter((notice) => notice.id !== id));
+    setNotices((ns) => ns.filter((n) => n.id !== id));
+    setBaseline((bs) => bs.filter((n) => n.id !== id));
 
     try {
-      const response = await fetch(`/api/notices/${id}`, { method: "DELETE" });
-
+      const response = await fetch(`${API_BASE}/api/notices/${id}`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Delete failed");
     } catch (error) {
+      console.error(error);
+      // Rollback
       setNotices(previousUI);
       setBaseline(previousBaseline);
-
-      console.log(error);
+      alert("Poisto epäonnistui. Yritä uudelleen.");
     }
   };
 
   const resetRow = (id: number) => {
     const original = baseline.find((item) => item.id === id);
-    setNotices((previous) =>
+    setNotices((prev) =>
       original
-        ? previous.map((notice) =>
-            notice.id === id ? { ...original } : notice
-          )
-        : previous.filter((notice) => notice.id !== id)
+        ? prev.map((notice) => (notice.id === id ? { ...original } : notice))
+        : prev.filter((notice) => notice.id !== id)
     );
   };
 
@@ -114,38 +114,36 @@ const ManageNoticesSection = ({
         {notices.map((notice) => {
           const disableActivate = isAtActiveLimit && !notice.active;
           return (
-            <li
-              key={notice.id}
-              className="rounded-lg border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-4"
-            >
+            <li key={notice.id} className="card p-4">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSubmitRow(notice);
                 }}
                 className="grid grid-cols-1 gap-4"
+                noValidate
               >
-                {/* title */}
                 <input
                   type="text"
                   value={notice.title}
                   onChange={(e) => handleTitleChange(notice.id, e.target.value)}
                   placeholder="Otsikko"
-                  className="text"
+                  className="input-field"
+                  required
                 />
 
-                {/* content (multiline) */}
                 <textarea
                   value={notice.content}
                   onChange={(e) =>
                     handleContentChange(notice.id, e.target.value)
                   }
                   placeholder="Sisältö"
+                  className="input-field"
                   rows={4}
+                  required
                 />
 
-                {/* active */}
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-muted">
                   <input
                     type="checkbox"
                     checked={notice.active}
@@ -158,23 +156,21 @@ const ManageNoticesSection = ({
                         ? "Maksimissaan 3 aktiivista tiedotetta"
                         : ""
                     }
-                    className="h-5 w-5 align-middle accent-[var(--primary)] disabled:opacity-50"
+                    className="h-5 w-5 align-middle disabled:opacity-50"
+                    style={{ accentColor: "var(--primary)" }}
                   />
-                  <span className="text-[var(--text-secondary)] leading-none">
-                    Aktiivinen
-                  </span>
+                  <span className="leading-none">Aktiivinen</span>
                 </label>
 
-                {/* actions (under inputs) */}
-                <div className="flex flex-wrap items-center gap-2 justify-end">
-                  <button type="submit" className="primary">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button type="submit" className="button button-primary">
                     Lähetä muutokset
                   </button>
 
                   <button
                     type="button"
                     onClick={() => resetRow(notice.id)}
-                    className="danger"
+                    className="button button-danger"
                   >
                     Palauta
                   </button>
@@ -182,7 +178,7 @@ const ManageNoticesSection = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(notice.id)}
-                    className="danger"
+                    className="button button-danger"
                   >
                     Poista
                   </button>
@@ -194,6 +190,4 @@ const ManageNoticesSection = ({
       </ul>
     </SectionWrapper>
   );
-};
-
-export default ManageNoticesSection;
+}

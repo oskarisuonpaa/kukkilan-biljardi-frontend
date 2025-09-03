@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import CreateNoticeSection from "./CreateNoticeSection";
 import { ContactInfoItem, NoticeItem } from "@/app/lib/definitions";
-import ManageNoticesSection from "./ManageNoticesSection";
-import ManageContactInfoSection from "./ManageContactInfoSection";
+import { useState } from "react";
+import CreateNoticeSection from "./components/CreateNoticeSection";
+import ManageNoticesSection from "./components/ManageNoticesSection";
+import ManageContactInfoSection from "./components/ManageContactInfoSection";
 
 const AdminSiteSettingsPage = ({
   initialNotices,
