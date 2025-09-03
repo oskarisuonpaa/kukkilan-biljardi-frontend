@@ -1,6 +1,6 @@
 import { fetchBookings, fetchCalendars } from "@/app/lib/api";
 import { BookingItem, CalendarItem } from "@/app/lib/definitions";
-import AdminBookingsPage from "@/components/admin/AdminBookingsPage";
+import AdminBookingsPage from "./AdminBookingsPage";
 
 const Page = async () => {
   const calendars = await fetchCalendars<CalendarItem[]>();

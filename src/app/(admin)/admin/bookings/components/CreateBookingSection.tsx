@@ -31,12 +31,9 @@ const CreateBookingSection = ({
   const [newPhone, setNewPhone] = useState("");
   const [newNotes, setNewNotes] = useState("");
 
-  const canCreate =
-    !creating ||
-    pendingRange ||
-    newName.trim() ||
-    newEmail.trim() ||
-    newPhone.trim();
+  const canCreate = Boolean(
+    pendingRange && newName.trim() && newEmail.trim() && newPhone.trim()
+  );
 
   const sameDay = useCallback(
     (iso: string) => new Date(iso).toDateString() === date.toDateString(),
