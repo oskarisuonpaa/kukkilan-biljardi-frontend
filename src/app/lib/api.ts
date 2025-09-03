@@ -42,5 +42,5 @@ export async function fetchCalendars<T = unknown>() {
 }
 
 export async function fetchBookings<T = unknown>(calendarId: number) {
-  return apiFetch<T>(`/api/calendars/${calendarId}/bookings`);
+  return apiFetch<T>(`/api/bookings?calendarId=${calendarId}`);
 }

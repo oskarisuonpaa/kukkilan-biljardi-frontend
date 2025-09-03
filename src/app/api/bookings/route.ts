@@ -37,7 +37,7 @@ const fetchBookingsForCalendar = async (calendarId: string) => {
   }
 
   const response = await fetch(
-    `${backendUrl}/api/calendars/${calendarId}/bookings`,
+    `${backendUrl}/api/calendar/${calendarId}/bookings`,
     {
       cache: "no-store",
     }
@@ -57,7 +57,7 @@ const createBookingForCalendar = async (
   }
 
   const response = await fetch(
-    `${backendUrl}/api/calendars/${calendarId}/bookings`,
+    `${backendUrl}/api/calendar/${calendarId}/bookings`,
     {
       method: "POST",
       headers: {
