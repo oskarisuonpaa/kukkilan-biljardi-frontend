@@ -1,52 +1,19 @@
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) {
-    return new Response("BACKEND_URL not configured", { status: 500 });
-  }
+import { NextRequest } from "next/server";
+import { proxyJson } from "../../_lib/proxy";
 
-  const requestBody = await request.json();
-
-  const response = await fetch(`${backendUrl}/api/notices/${params.id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "Failed to update notice");
-    return new Response(errorText, { status: response.status || 502 });
-  }
-
-  const responseData = await response.json();
-  return Response.json(responseData, { status: response.status });
+export async function PUT(req: NextRequest, ctx: { params: { id: string } }) {
+  const id = Number(ctx.params.id);
+  if (!Number.isFinite(id)) return new Response("Invalid id", { status: 400 });
+  const body = await req.json().catch(() => null);
+  if (!body) return new Response("Invalid JSON", { status: 400 });
+  return proxyJson(req, "PUT", `/api/notices/${id}`, body);
 }
 
 export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  ctx: { params: { id: string } }
 ) {
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) {
-    return new Response("BACKEND_URL not configured", { status: 500 });
-  }
-
-  const response = await fetch(`${backendUrl}/api/notices/${params.id}`, {
-    method: "DELETE",
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "Failed to delete notice");
-    return new Response(errorText, { status: response.status || 502 });
-  }
-
-  return new Response(null, { status: response.status });
+  const id = Number(ctx.params.id);
+  if (!Number.isFinite(id)) return new Response("Invalid id", { status: 400 });
+  return proxyJson(req, "DELETE", `/api/notices/${id}`);
 }

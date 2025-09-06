@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
-import { proxyJson } from "../_lib/proxy";
+import { proxyJson } from "../../_lib/proxy";
 
 export async function GET(req: NextRequest) {
-  return proxyJson(req, "GET", "/api/notices");
+  return proxyJson(req, "GET", "/api/opening-hours/exceptions");
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   if (!body) return new Response("Invalid JSON", { status: 400 });
-  return proxyJson(req, "POST", "/api/notices", body);
+  return proxyJson(req, "POST", "/api/opening-hours/exceptions", body);
 }

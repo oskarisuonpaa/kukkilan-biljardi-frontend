@@ -1,19 +1,14 @@
-export async function GET() {
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) {
-    return new Response("BACKEND_URL not configured", { status: 500 });
-  }
+import { NextRequest } from "next/server";
+import { proxyJson } from "../_lib/proxy";
 
-  const response = await fetch(`${backendUrl}/api/opening-hours`, {
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "Failed to fetch opening hours");
-    return new Response(errorText, { status: response.status || 502 });
-  }
+/** GET regular weekly schedule */
+export async function GET(req: NextRequest) {
+  return proxyJson(req, "GET", "/api/opening-hours");
+}
 
-  const openingHours = await response.json();
-  return Response.json(openingHours, { status: 200 });
+/** PUT regular weekly schedule */
+export async function PUT(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  if (!body) return new Response("Invalid JSON", { status: 400 });
+  return proxyJson(req, "PUT", "/api/opening-hours", body);
 }

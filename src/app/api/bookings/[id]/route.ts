@@ -1,28 +1,19 @@
-export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const bookingId = searchParams.get("id");
-  if (!bookingId) {
-    return new Response("Missing bookingId", { status: 400 });
-  }
+import { NextRequest } from "next/server";
+import { proxyJson } from "../../_lib/proxy";
 
-  try {
-    await deleteBooking(bookingId);
-    return new Response("Booking deleted", { status: 204 });
-  } catch {
-    return new Response("Failed to delete booking", { status: 500 });
-  }
+export async function DELETE(
+  _req: NextRequest,
+  ctx: { params: { id: string } }
+) {
+  const id = Number(ctx.params.id);
+  if (!Number.isFinite(id)) return new Response("Invalid id", { status: 400 });
+  return proxyJson(_req, "DELETE", `/api/bookings/${id}`);
 }
 
-const deleteBooking = async (bookingId: string) => {
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) {
-    return new Response("BACKEND_URL not configured", { status: 500 });
-  }
-
-  const response = await fetch(`${backendUrl}/api/bookings/${bookingId}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) throw new Error("Failed to delete booking");
-  return response.json();
-};
+export async function PUT(req: NextRequest, ctx: { params: { id: string } }) {
+  const id = Number(ctx.params.id);
+  if (!Number.isFinite(id)) return new Response("Invalid id", { status: 400 });
+  const body = await req.json().catch(() => null);
+  if (!body) return new Response("Invalid JSON", { status: 400 });
+  return proxyJson(req, "PUT", `/api/bookings/${id}`, body);
+}
