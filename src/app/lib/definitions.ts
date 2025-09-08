@@ -9,12 +9,6 @@ export type CalendarItem = { id: number; name: string; active: boolean };
 
 export type ContactInfoItem = { address: string; phone: string; email: string };
 
-export type OpeningHourItem = {
-  weekday: number;
-  opens_at: string;
-  closes_at: string;
-};
-
 export type BookingItem = {
   id: number;
   calendar_id: number;
@@ -36,22 +30,44 @@ export type CreateBookingParams = {
   end: string;
 };
 
-// Opening times use 0 = Sunday ... 6 = Saturday (JS Date convention)
-export type OpeningInterval = {
-  start: string; // "HH:MM", 24h
-  end: string; // "HH:MM", 24h
+// ===== Regular Opening Hours =====
+export type OpeningHourResponse = {
+  weekday: number; // 1 = Monday … 7 = Sunday
+  opens_at: string; // "HH:MM:SS"
+  closes_at: string; // "HH:MM:SS"
 };
 
-export type OpeningDay = {
-  weekday: number; // 0..6
-  closed: boolean; // true = closed for the whole day
-  intervals: OpeningInterval[]; // zero or more open intervals
+export type UpsertOpeningHourRequest = {
+  opens_at: string; // required
+  closes_at: string; // required
 };
 
-export type OpeningException = {
-  id: number;
+// ===== Opening Exceptions =====
+export type OpeningExceptionResponse = {
   date: string; // "YYYY-MM-DD"
-  closed: boolean;
-  intervals: OpeningInterval[];
-  note?: string;
+  is_closed: boolean;
+  opens_at: string | null;
+  closes_at: string | null;
+};
+
+export type UpsertOpeningExceptionRequest = {
+  is_closed: boolean;
+  opens_at: string | null;
+  closes_at: string | null;
+};
+
+export type ExceptionsQuery = {
+  from?: string; // "YYYY-MM-DD"
+  to?: string; // "YYYY-MM-DD"
+};
+
+// ===== Local Frontend Helpers =====
+export const WEEKDAYS_FI: Record<number, string> = {
+  1: "Maanantai",
+  2: "Tiistai",
+  3: "Keskiviikko",
+  4: "Torstai",
+  5: "Perjantai",
+  6: "Lauantai",
+  7: "Sunnuntai",
 };

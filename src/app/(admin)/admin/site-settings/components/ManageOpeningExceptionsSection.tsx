@@ -1,350 +1,272 @@
+// src/app/(admin)/admin/site-settings/components/ManageOpeningExceptionsSection.tsx
 "use client";
 
-import { useMemo, useState } from "react";
-import SectionWrapper from "@/components/SectionWrapper";
-import type { OpeningException, OpeningInterval } from "@/app/lib/definitions";
+import { useEffect, useMemo, useState } from "react";
+import type { UpsertOpeningExceptionRequest } from "@/app/lib/definitions";
 import {
-  createOpeningException,
-  updateOpeningException,
+  listOpeningExceptions,
+  upsertOpeningException,
   deleteOpeningException,
 } from "@/app/lib/openingHoursApi";
 
-type Props = {
-  initialExceptions: OpeningException[]; // supply from server
+type EditableException = {
+  id: string; // stable key on the client, use date as id
+  date: string; // "YYYY-MM-DD"
+  isClosed: boolean;
+  opensAt: string; // "HH:MM"
+  closesAt: string; // "HH:MM"
+  isNew: boolean; // true if this row has not been persisted
+  isSaving: boolean;
+  errorMessage: string | null;
 };
 
-function isValidHHMM(v: string) {
-  return (
-    /^\d{2}:\d{2}$/.test(v) &&
-    Number(v.slice(0, 2)) < 24 &&
-    Number(v.slice(3, 5)) < 60
-  );
+function toUiTime(hms: string | null): string {
+  if (!hms) return "09:00";
+  const [hh = "09", mm = "00"] = hms.split(":");
+  return `${hh.padStart(2, "0")}:${mm.padStart(2, "0")}`;
 }
 
-function intervalValid(x: OpeningInterval): boolean {
-  return isValidHHMM(x.start) && isValidHHMM(x.end) && x.start < x.end;
+function toApiTime(hm: string): string {
+  const [hh = "09", mm = "00"] = hm.split(":");
+  return `${hh.padStart(2, "0")}:${mm.padStart(2, "0")}:00`;
 }
 
-export default function ManageOpeningExceptionsSection({
-  initialExceptions,
-}: Props) {
-  const [items, setItems] = useState<OpeningException[]>(initialExceptions);
-  const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState<Omit<OpeningException, "id">>({
-    date: "",
-    closed: false,
-    intervals: [{ start: "10:00", end: "16:00" }],
-    note: "",
-  });
+function todayIso(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
-  const draftError = useMemo(() => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date))
-      return "Päivämäärä ei ole muodossa VVVV-KK-PP.";
-    if (!draft.closed) {
-      if (draft.intervals.length === 0)
-        return "Lisää vähintään yksi aikaväli tai merkitse kiinni.";
-      if (draft.intervals.some((iv) => !intervalValid(iv)))
-        return "Aikavälit eivät ole kelvollisia.";
+export default function ManageOpeningExceptionsSection() {
+  const [rows, setRows] = useState<EditableException[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // Load a reasonable window: from today to +90 days. Adjust as you like.
+        const from = todayIso();
+        const to = new Date(Date.now() + 90 * 24 * 3600 * 1000)
+          .toISOString()
+          .slice(0, 10);
+        const data = await listOpeningExceptions({ from, to });
+        if (!mounted) return;
+        const mapped: EditableException[] = data.map((e) => ({
+          id: e.date,
+          date: e.date,
+          isClosed: e.is_closed,
+          opensAt: toUiTime(e.opens_at),
+          closesAt: toUiTime(e.closes_at),
+          isNew: false,
+          isSaving: false,
+          errorMessage: null,
+        }));
+        setRows(mapped);
+        setLoadError(null);
+      } catch (err) {
+        setLoadError(
+          (err as Error).message || "Failed to load opening exceptions"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const addNewRow = (): void => {
+    setRows((prev) => [
+      {
+        id: `new-${Math.random().toString(36).slice(2)}`,
+        date: todayIso(),
+        isClosed: false,
+        opensAt: "09:00",
+        closesAt: "17:00",
+        isNew: true,
+        isSaving: false,
+        errorMessage: null,
+      },
+      ...prev,
+    ]);
+  };
+
+  const updateRow = (id: string, patch: Partial<EditableException>): void => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const removeRow = async (row: EditableException): Promise<void> => {
+    if (row.isNew) {
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
+      return;
     }
-    return "";
-  }, [draft]);
-
-  async function handleCreate() {
-    if (draftError) return;
-    setCreating(true);
-    const optimistic: OpeningException = { id: -Date.now(), ...draft };
-    setItems((prev) => [optimistic, ...prev]);
+    updateRow(row.id, { isSaving: true, errorMessage: null });
     try {
-      const saved = await createOpeningException(draft);
-      setItems((prev) => prev.map((x) => (x.id === optimistic.id ? saved : x)));
-      setDraft({
-        date: "",
-        closed: false,
-        intervals: [{ start: "10:00", end: "16:00" }],
-        note: "",
+      await deleteOpeningException(row.date);
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
+    } catch (err) {
+      updateRow(row.id, {
+        isSaving: false,
+        errorMessage: (err as Error).message,
       });
-    } catch (e) {
-      console.error(e);
-      setItems((prev) => prev.filter((x) => x.id !== optimistic.id));
-      alert("Tiedon tallennus epäonnistui.");
-    } finally {
-      setCreating(false);
     }
-  }
+  };
 
-  async function handleSaveRow(row: OpeningException) {
+  const validate = (row: EditableException): string | null => {
+    if (!row.date) return "Date is required.";
+    if (row.isClosed) return null;
+    if (!row.opensAt || !row.closesAt)
+      return "Both opening and closing times are required when not closed.";
+    if (row.opensAt >= row.closesAt)
+      return "Opening time must be earlier than closing time.";
+    return null;
+  };
+
+  const persistRow = async (row: EditableException): Promise<void> => {
+    const error = validate(row);
+    if (error) {
+      updateRow(row.id, { errorMessage: error });
+      return;
+    }
+    updateRow(row.id, { isSaving: true, errorMessage: null });
+
+    const payload: UpsertOpeningExceptionRequest = row.isClosed
+      ? { is_closed: true, opens_at: null, closes_at: null }
+      : {
+          is_closed: false,
+          opens_at: toApiTime(row.opensAt),
+          closes_at: toApiTime(row.closesAt),
+        };
+
     try {
-      const saved = await updateOpeningException(row.id, {
-        date: row.date,
-        closed: row.closed,
-        intervals: row.intervals,
-        note: row.note,
+      await upsertOpeningException(row.date, payload);
+      updateRow(row.id, { isSaving: false, isNew: false, errorMessage: null });
+    } catch (err) {
+      updateRow(row.id, {
+        isSaving: false,
+        errorMessage: (err as Error).message,
       });
-      setItems((prev) => prev.map((x) => (x.id === row.id ? saved : x)));
-    } catch (e) {
-      console.error(e);
-      alert("Tallennus epäonnistui.");
     }
-  }
+  };
 
-  async function handleDeleteRow(id: number) {
-    if (!confirm("Poistetaanko poikkeusaukiolo?")) return;
-    const prev = items;
-    setItems((cur) => cur.filter((x) => x.id !== id));
-    try {
-      await deleteOpeningException(id);
-    } catch (e) {
-      console.error(e);
-      setItems(prev);
-      alert("Poisto epäonnistui.");
-    }
-  }
+  const hasSaving = useMemo(() => rows.some((r) => r.isSaving), [rows]);
 
   return (
-    <SectionWrapper title="Poikkeusaukiolot">
-      {/* Create new exception */}
-      <div className="card p-4 mb-4">
-        <form
-          className="grid grid-cols-1 gap-3 md:grid-cols-[auto_1fr] md:items-end"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleCreate();
-          }}
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Opening Exceptions</h2>
+        <button
+          className="rounded-xl border px-4 py-2"
+          onClick={addNewRow}
+          disabled={isLoading}
+          aria-disabled={isLoading}
         >
-          <div className="grid grid-cols-1 gap-2">
-            <label className="text-sm text-muted">Päivämäärä</label>
-            <input
-              type="date"
-              className="input-field"
-              value={draft.date}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, date: e.target.value }))
-              }
-              required
-            />
-
-            <label className="flex items-center gap-2 text-muted">
-              <input
-                type="checkbox"
-                checked={draft.closed}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    closed: e.target.checked,
-                    intervals: e.target.checked
-                      ? []
-                      : d.intervals.length
-                      ? d.intervals
-                      : [{ start: "10:00", end: "16:00" }],
-                  }))
-                }
-                className="h-5 w-5"
-                style={{ accentColor: "var(--primary)" }}
-              />
-              <span>Kiinni</span>
-            </label>
-
-            {!draft.closed && (
-              <>
-                <div className="space-y-2">
-                  {draft.intervals.map((iv, i) => (
-                    <div
-                      key={i}
-                      className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2"
-                    >
-                      <input
-                        className="input-field"
-                        placeholder="HH:MM"
-                        value={iv.start}
-                        onChange={(e) =>
-                          setDraft((d) => ({
-                            ...d,
-                            intervals: d.intervals.map((x, idx) =>
-                              idx === i ? { ...x, start: e.target.value } : x
-                            ),
-                          }))
-                        }
-                      />
-                      <span className="text-sm text-muted">–</span>
-                      <input
-                        className="input-field"
-                        placeholder="HH:MM"
-                        value={iv.end}
-                        onChange={(e) =>
-                          setDraft((d) => ({
-                            ...d,
-                            intervals: d.intervals.map((x, idx) =>
-                              idx === i ? { ...x, end: e.target.value } : x
-                            ),
-                          }))
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="button button-danger"
-                        onClick={() =>
-                          setDraft((d) => ({
-                            ...d,
-                            intervals: d.intervals.filter(
-                              (_, idx) => idx !== i
-                            ),
-                          }))
-                        }
-                      >
-                        Poista
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="button button-primary"
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        closed: false,
-                        intervals: [
-                          ...d.intervals,
-                          { start: "10:00", end: "16:00" },
-                        ],
-                      }))
-                    }
-                  >
-                    Lisää aikaväli
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-end justify-end">
-            <button
-              type="submit"
-              className="button button-primary"
-              disabled={!!draftError || creating}
-            >
-              {creating ? "Luodaan…" : "Lisää poikkeus"}
-            </button>
-          </div>
-        </form>
-
-        {draftError && (
-          <p className="mt-2 text-xs" style={{ color: "var(--danger)" }}>
-            {draftError}
-          </p>
-        )}
+          Add Exception
+        </button>
       </div>
 
-      {/* Existing exceptions */}
-      <ul className="space-y-3">
-        {items.map((row) => (
-          <li key={row.id} className="card p-4">
-            <form
-              className="grid grid-cols-1 gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveRow(row);
-              }}
-            >
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr] md:items-center">
-                <label className="text-sm text-muted">Päivämäärä</label>
-                <input
-                  type="date"
-                  className="input-field"
-                  value={row.date}
-                  onChange={(e) => (row.date = e.target.value)}
-                  required
-                />
-              </div>
+      {isLoading ? (
+        <div className="text-muted">Loading exceptions…</div>
+      ) : loadError ? (
+        <div className="text-red-600">Failed to load: {loadError}</div>
+      ) : rows.length === 0 ? (
+        <div className="text-muted">No exceptions in the selected window.</div>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row) => {
+            const disabled = row.isClosed;
+            return (
+              <div key={row.id} className="rounded-2xl border p-4 shadow-sm">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                  <label className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">Date</span>
+                    <input
+                      type="date"
+                      value={row.date}
+                      onChange={(e) =>
+                        updateRow(row.id, { date: e.target.value })
+                      }
+                      className="rounded-xl border px-3 py-2"
+                    />
+                  </label>
 
-              <label className="flex items-center gap-2 text-muted">
-                <input
-                  type="checkbox"
-                  checked={row.closed}
-                  onChange={(e) => {
-                    row.closed = e.target.checked;
-                    if (row.closed) row.intervals = [];
-                  }}
-                  className="h-5 w-5"
-                  style={{ accentColor: "var(--primary)" }}
-                />
-                <span>Kiinni</span>
-              </label>
+                  <label className="flex items-end gap-2">
+                    <input
+                      type="checkbox"
+                      checked={row.isClosed}
+                      onChange={(e) =>
+                        updateRow(row.id, { isClosed: e.target.checked })
+                      }
+                    />
+                    <span>Closed</span>
+                  </label>
 
-              {!row.closed && (
-                <div className="space-y-2">
-                  {row.intervals.map((iv, i) => (
-                    <div
-                      key={i}
-                      className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2"
-                    >
-                      <input
-                        className="input-field"
-                        value={iv.start}
-                        onChange={(e) =>
-                          (row.intervals[i] = { ...iv, start: e.target.value })
-                        }
-                        placeholder="HH:MM"
-                      />
-                      <span className="text-sm text-muted">–</span>
-                      <input
-                        className="input-field"
-                        value={iv.end}
-                        onChange={(e) =>
-                          (row.intervals[i] = { ...iv, end: e.target.value })
-                        }
-                        placeholder="HH:MM"
-                      />
-                      <button
-                        type="button"
-                        className="button button-danger"
-                        onClick={() =>
-                          (row.intervals = row.intervals.filter(
-                            (_, idx) => idx !== i
-                          ))
-                        }
-                      >
-                        Poista
-                      </button>
-                    </div>
-                  ))}
+                  <label className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">
+                      Opens at
+                    </span>
+                    <input
+                      type="time"
+                      value={row.opensAt}
+                      onChange={(e) =>
+                        updateRow(row.id, { opensAt: e.target.value })
+                      }
+                      disabled={disabled}
+                      className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    />
+                  </label>
+
+                  <label className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">
+                      Closes at
+                    </span>
+                    <input
+                      type="time"
+                      value={row.closesAt}
+                      onChange={(e) =>
+                        updateRow(row.id, { closesAt: e.target.value })
+                      }
+                      disabled={disabled}
+                      className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    />
+                  </label>
+                </div>
+
+                {row.errorMessage ? (
+                  <div className="mt-2 text-sm text-red-600">
+                    {row.errorMessage}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 flex gap-2">
                   <button
-                    type="button"
-                    className="button button-primary"
-                    onClick={() =>
-                      row.intervals.push({ start: "10:00", end: "16:00" })
-                    }
+                    className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    onClick={() => void persistRow(row)}
+                    disabled={row.isSaving || hasSaving}
+                    aria-disabled={row.isSaving || hasSaving}
                   >
-                    Lisää aikaväli
+                    {row.isSaving ? "Saving…" : "Save"}
+                  </button>
+
+                  <button
+                    className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    onClick={() => void removeRow(row)}
+                    disabled={row.isSaving || hasSaving}
+                    aria-disabled={row.isSaving || hasSaving}
+                  >
+                    Delete
                   </button>
                 </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr] md:items-center">
-                <label className="text-sm text-muted">Huomautus</label>
-                <input
-                  className="input-field"
-                  value={row.note ?? ""}
-                  onChange={(e) => (row.note = e.target.value)}
-                  placeholder="Esim. Juhannus"
-                />
               </div>
-
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <button type="submit" className="button button-primary">
-                  Lähetä muutokset
-                </button>
-                <button
-                  type="button"
-                  className="button button-danger"
-                  onClick={() => handleDeleteRow(row.id)}
-                >
-                  Poista
-                </button>
-              </div>
-            </form>
-          </li>
-        ))}
-      </ul>
-    </SectionWrapper>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

@@ -1,263 +1,264 @@
+// src/app/(admin)/admin/site-settings/components/ManageOpeningHoursSection.tsx
 "use client";
 
-import { useMemo, useState } from "react";
-import SectionWrapper from "@/components/SectionWrapper";
-import type { OpeningDay, OpeningInterval } from "@/app/lib/definitions";
-import { saveOpeningDays } from "@/app/lib/openingHoursApi";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { WEEKDAYS_FI, type OpeningHourResponse } from "@/app/lib/definitions";
+import {
+  listOpeningHours,
+  upsertOpeningHour,
+  deleteOpeningHour,
+} from "@/app/lib/openingHoursApi";
 
-type Props = {
-  initialDays: OpeningDay[]; // supply from server page loader
+/**
+ * Internal representation for one weekday row in the editor.
+ * If hasHours is false, that weekday is considered "closed" (no record in backend).
+ */
+type EditableDay = {
+  weekday: number; // 1 … 7
+  hasHours: boolean; // true if the backend holds hours for this weekday
+  opensAt: string; // "HH:MM" (ui only, will be sent as "HH:MM:SS")
+  closesAt: string; // "HH:MM"
+  isSaving: boolean;
+  errorMessage: string | null;
 };
 
-const WEEKDAYS_FI = [
-  "Sunnuntai",
-  "Maanantai",
-  "Tiistai",
-  "Keskiviikko",
-  "Torstai",
-  "Perjantai",
-  "Lauantai",
-];
-
-function makeEmptyDay(weekday: number): OpeningDay {
-  return { weekday, closed: true, intervals: [] };
+function toUiTime(hms: string): string {
+  // Convert "HH:MM:SS" -> "HH:MM"
+  const [hh = "09", mm = "00"] = hms.split(":");
+  return `${hh.padStart(2, "0")}:${mm.padStart(2, "0")}`;
 }
 
-function normalizeDays(input: OpeningDay[]): OpeningDay[] {
-  const byDay = new Map(input.map((d) => [d.weekday, d]));
-  return Array.from({ length: 7 }, (_, w) => {
-    const d = byDay.get(w);
-    return d ? { ...d, intervals: d.intervals ?? [] } : makeEmptyDay(w);
-  });
+function toApiTime(hm: string): string {
+  // Convert "HH:MM" -> "HH:MM:00"
+  const [hh = "09", mm = "00"] = hm.split(":");
+  return `${hh.padStart(2, "0")}:${mm.padStart(2, "0")}:00`;
 }
 
-function isValidHHMM(v: string): boolean {
-  return (
-    /^\d{2}:\d{2}$/.test(v) &&
-    Number(v.slice(0, 2)) < 24 &&
-    Number(v.slice(3, 5)) < 60
+function makeEmptyDay(weekday: number): EditableDay {
+  return {
+    weekday,
+    hasHours: false,
+    opensAt: "09:00",
+    closesAt: "17:00",
+    isSaving: false,
+    errorMessage: null,
+  };
+}
+
+export default function ManageOpeningHoursSection() {
+  const [days, setDays] = useState<EditableDay[]>(
+    Array.from({ length: 7 }, (_, idx) => makeEmptyDay(idx + 1))
   );
-}
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-function cmpHHMM(a: string, b: string): number {
-  return a.localeCompare(b);
-}
+  // Load once on mount.
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const existing = await listOpeningHours();
+        if (!mounted) return;
+        setDays((prev) => {
+          const map = new Map<number, OpeningHourResponse>();
+          existing.forEach((r) => map.set(r.weekday, r));
+          return prev.map((d) => {
+            const row = map.get(d.weekday);
+            if (!row) return makeEmptyDay(d.weekday); // closed
+            return {
+              weekday: d.weekday,
+              hasHours: true,
+              opensAt: toUiTime(row.opens_at),
+              closesAt: toUiTime(row.closes_at),
+              isSaving: false,
+              errorMessage: null,
+            };
+          });
+        });
+        setLoadError(null);
+      } catch (err) {
+        setLoadError((err as Error).message || "Failed to load opening hours");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-function intervalValid(x: OpeningInterval): boolean {
-  return (
-    isValidHHMM(x.start) && isValidHHMM(x.end) && cmpHHMM(x.start, x.end) < 0
-  );
-}
+  const handleToggleClosed = (weekday: number, closed: boolean): void => {
+    setDays((prev) =>
+      prev.map((d) => (d.weekday === weekday ? { ...d, hasHours: !closed } : d))
+    );
+  };
 
-export default function ManageOpeningHoursSection({ initialDays }: Props) {
-  const [days, setDays] = useState<OpeningDay[]>(normalizeDays(initialDays));
-  const [saving, setSaving] = useState(false);
+  const handleTimeChange = (
+    weekday: number,
+    field: "opensAt" | "closesAt",
+    value: string
+  ): void => {
+    setDays((prev) =>
+      prev.map((d) =>
+        d.weekday === weekday ? ({ ...d, [field]: value } as EditableDay) : d
+      )
+    );
+  };
 
-  const errors = useMemo(() => {
-    const errs = new Map<number, string>();
-    days.forEach((d) => {
-      if (!d.closed) {
-        if (d.intervals.length === 0) {
-          errs.set(
-            d.weekday,
-            "Lisää vähintään yksi aikaväli tai merkitse päivä suljetuksi."
-          );
-          return;
-        }
-        const bad = d.intervals.find((iv) => !intervalValid(iv));
-        if (bad) {
-          errs.set(
-            d.weekday,
-            "Aikavälit eivät ole kelvollisia (muoto HH:MM ja alku < loppu)."
-          );
-          return;
-        }
-        const sorted = [...d.intervals].sort((a, b) =>
-          cmpHHMM(a.start, b.start)
-        );
-        for (let i = 1; i < sorted.length; i++) {
-          if (cmpHHMM(sorted[i - 1].end, sorted[i].start) > 0) {
-            errs.set(d.weekday, "Aikavälit menevät päällekkäin.");
-            break;
-          }
-        }
+  const validateTimes = (opensAt: string, closesAt: string): string | null => {
+    // Very small guard: both present and opensAt < closesAt lexicographically in "HH:MM"
+    if (!opensAt || !closesAt)
+      return "Both opening and closing times are required.";
+    if (opensAt >= closesAt)
+      return "Opening time must be earlier than closing time.";
+    return null;
+    // If you later need overnight hours (e.g., 22:00–02:00), adapt this check accordingly.
+  };
+
+  const handleSaveOne = async (day: EditableDay): Promise<void> => {
+    setDays((prev) =>
+      prev.map((d) =>
+        d.weekday === day.weekday
+          ? { ...d, isSaving: true, errorMessage: null }
+          : d
+      )
+    );
+    try {
+      if (!day.hasHours) {
+        // No hours means "closed" => ensure backend entry is deleted.
+        await deleteOpeningHour(day.weekday);
+      } else {
+        const error = validateTimes(day.opensAt, day.closesAt);
+        if (error) throw new Error(error);
+        await upsertOpeningHour(day.weekday, {
+          opens_at: toApiTime(day.opensAt),
+          closes_at: toApiTime(day.closesAt),
+        });
+      }
+      setDays((prev) =>
+        prev.map((d) =>
+          d.weekday === day.weekday
+            ? { ...d, isSaving: false, errorMessage: null }
+            : d
+        )
+      );
+    } catch (err) {
+      setDays((prev) =>
+        prev.map((d) =>
+          d.weekday === day.weekday
+            ? { ...d, isSaving: false, errorMessage: (err as Error).message }
+            : d
+        )
+      );
+    }
+  };
+
+  const handleSaveAll = (): void => {
+    startTransition(async () => {
+      for (const day of days) {
+        // Save sequentially to keep errors localized per day row.
+        await handleSaveOne(day);
       }
     });
-    return errs;
-  }, [days]);
+  };
 
-  const canSave = errors.size === 0;
-
-  function toggleClosed(w: number, closed: boolean) {
-    setDays((prev) =>
-      prev.map((d) =>
-        d.weekday === w
-          ? {
-              ...d,
-              closed,
-              intervals: closed
-                ? []
-                : d.intervals.length
-                ? d.intervals
-                : [{ start: "08:00", end: "22:00" }],
-            }
-          : d
-      )
-    );
-  }
-
-  function addInterval(w: number) {
-    setDays((prev) =>
-      prev.map((d) =>
-        d.weekday === w
-          ? {
-              ...d,
-              closed: false,
-              intervals: [...d.intervals, { start: "08:00", end: "22:00" }],
-            }
-          : d
-      )
-    );
-  }
-
-  function updateInterval(
-    w: number,
-    i: number,
-    patch: Partial<OpeningInterval>
-  ) {
-    setDays((prev) =>
-      prev.map((d) =>
-        d.weekday === w
-          ? {
-              ...d,
-              intervals: d.intervals.map((iv, idx) =>
-                idx === i ? { ...iv, ...patch } : iv
-              ),
-            }
-          : d
-      )
-    );
-  }
-
-  function removeInterval(w: number, i: number) {
-    setDays((prev) =>
-      prev.map((d) =>
-        d.weekday === w
-          ? { ...d, intervals: d.intervals.filter((_, idx) => idx !== i) }
-          : d
-      )
-    );
-  }
-
-  async function handleSave() {
-    if (!canSave) return;
-    setSaving(true);
-    try {
-      const saved = await saveOpeningDays(days);
-      setDays(normalizeDays(saved));
-    } catch (e) {
-      console.error(e);
-      alert("Tallennus epäonnistui. Yritä uudelleen.");
-    } finally {
-      setSaving(false);
-    }
-  }
+  const isAnySaving = useMemo(
+    () => days.some((d) => d.isSaving) || isPending,
+    [days, isPending]
+  );
 
   return (
-    <SectionWrapper title="Aukioloajat">
-      <div className="space-y-4">
-        {days.map((d) => (
-          <div key={d.weekday} className="card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="font-medium">{WEEKDAYS_FI[d.weekday]}</div>
-              <label className="flex items-center gap-2 text-muted">
-                <input
-                  type="checkbox"
-                  checked={d.closed}
-                  onChange={(e) => toggleClosed(d.weekday, e.target.checked)}
-                  className="h-5 w-5"
-                  style={{ accentColor: "var(--primary)" }}
-                />
-                <span>Kiinni koko päivän</span>
-              </label>
-            </div>
-
-            {!d.closed && (
-              <div className="mt-3 space-y-2">
-                {d.intervals.map((iv, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-[auto_1fr_auto_1fr_auto_auto] items-center gap-2"
-                  >
-                    <span className="text-sm text-muted">Aukeaa</span>
-                    <input
-                      className="input-field"
-                      placeholder="HH:MM"
-                      value={iv.start}
-                      onChange={(e) =>
-                        updateInterval(d.weekday, i, { start: e.target.value })
-                      }
-                    />
-                    <span className="mx-1 text-sm text-muted">–</span>
-                    <input
-                      className="input-field"
-                      placeholder="HH:MM"
-                      value={iv.end}
-                      onChange={(e) =>
-                        updateInterval(d.weekday, i, { end: e.target.value })
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="button button-danger"
-                      onClick={() => removeInterval(d.weekday, i)}
-                    >
-                      Poista
-                    </button>
-                    {i === d.intervals.length - 1 && (
-                      <button
-                        type="button"
-                        className="button button-primary"
-                        onClick={() => addInterval(d.weekday)}
-                      >
-                        Lisää väli
-                      </button>
-                    )}
-                  </div>
-                ))}
-
-                {d.intervals.length === 0 && (
-                  <button
-                    type="button"
-                    className="button button-primary"
-                    onClick={() => addInterval(d.weekday)}
-                  >
-                    Lisää aikaväli
-                  </button>
-                )}
-              </div>
-            )}
-
-            {errors.has(d.weekday) && (
-              <p className="mt-2 text-xs" style={{ color: "var(--danger)" }}>
-                {errors.get(d.weekday)}
-              </p>
-            )}
-          </div>
-        ))}
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={handleSave}
-            disabled={!canSave || saving}
-            aria-disabled={!canSave || saving}
-          >
-            {saving ? "Tallennetaan…" : "Tallenna aukioloajat"}
-          </button>
-        </div>
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Regular Opening Hours</h2>
+        <button
+          className="rounded-xl bg-black px-4 py-2 text-white disabled:opacity-50"
+          onClick={handleSaveAll}
+          disabled={isLoading || isAnySaving}
+          aria-disabled={isLoading || isAnySaving}
+        >
+          Save All Changes
+        </button>
       </div>
-    </SectionWrapper>
+
+      {isLoading ? (
+        <div className="text-muted">Loading opening hours…</div>
+      ) : loadError ? (
+        <div className="text-red-600">Failed to load: {loadError}</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {days.map((d) => {
+            const isClosed = !d.hasHours;
+            return (
+              <div key={d.weekday} className="rounded-2xl border p-4 shadow-sm">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="font-medium">{WEEKDAYS_FI[d.weekday]}</div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={isClosed}
+                      onChange={(e) =>
+                        handleToggleClosed(d.weekday, e.target.checked)
+                      }
+                    />
+                    Closed
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 items-end gap-3">
+                  <label className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">
+                      Opens at
+                    </span>
+                    <input
+                      type="time"
+                      value={d.opensAt}
+                      onChange={(e) =>
+                        handleTimeChange(d.weekday, "opensAt", e.target.value)
+                      }
+                      disabled={isClosed}
+                      className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    />
+                  </label>
+
+                  <label className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">
+                      Closes at
+                    </span>
+                    <input
+                      type="time"
+                      value={d.closesAt}
+                      onChange={(e) =>
+                        handleTimeChange(d.weekday, "closesAt", e.target.value)
+                      }
+                      disabled={isClosed}
+                      className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    />
+                  </label>
+                </div>
+
+                {d.errorMessage ? (
+                  <div className="mt-2 text-sm text-red-600">
+                    {d.errorMessage}
+                  </div>
+                ) : null}
+
+                <div className="mt-3">
+                  <button
+                    className="rounded-xl border px-3 py-2 disabled:opacity-50"
+                    onClick={() => void handleSaveOne(d)}
+                    disabled={d.isSaving}
+                    aria-disabled={d.isSaving}
+                  >
+                    {d.isSaving ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

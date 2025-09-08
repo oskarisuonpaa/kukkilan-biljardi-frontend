@@ -37,6 +37,10 @@ export async function fetchOpeningHours<T = unknown>() {
   return apiFetch<T>("/api/opening-hours");
 }
 
+export async function fetchOpeningExceptions<T = unknown>() {
+  return apiFetch<T>("/api/opening-hours/exceptions");
+}
+
 export async function fetchCalendars<T = unknown>() {
   return apiFetch<T>("/api/calendars");
 }

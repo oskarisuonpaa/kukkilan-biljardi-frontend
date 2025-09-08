@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ContactInfoItem,
-  NoticeItem,
-  OpeningDay,
-  OpeningException,
-} from "@/app/lib/definitions";
+import { ContactInfoItem, NoticeItem } from "@/app/lib/definitions";
 import { useState } from "react";
 import CreateNoticeSection from "./components/CreateNoticeSection";
 import ManageNoticesSection from "./components/ManageNoticesSection";
@@ -16,13 +11,9 @@ import ManageOpeningHoursSection from "./components/ManageOpeningHoursSection";
 const AdminSiteSettingsPage = ({
   initialNotices,
   initialContactInfo,
-  initialOpeningDays,
-  initialOpeningExceptions,
 }: {
   initialNotices: NoticeItem[];
   initialContactInfo: ContactInfoItem;
-  initialOpeningDays: OpeningDay[];
-  initialOpeningExceptions: OpeningException[];
 }) => {
   const [notices, setNotices] = useState<NoticeItem[]>(initialNotices);
   const [noticesBaseline, setNoticesBaseline] =
@@ -51,10 +42,8 @@ const AdminSiteSettingsPage = ({
         baseline={contactInfoBaseline}
         setBaseline={setContactInfoBaseline}
       />
-      <ManageOpeningHoursSection initialDays={initialOpeningDays} />
-      <ManageOpeningExceptionsSection
-        initialExceptions={initialOpeningExceptions}
-      />
+      <ManageOpeningHoursSection />
+      <ManageOpeningExceptionsSection />
     </main>
   );
 };

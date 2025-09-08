@@ -1,10 +1,12 @@
 import { fetchNotices, fetchOpeningHours } from "@/app/lib/api";
-import { NoticeItem, OpeningHourItem } from "@/app/lib/definitions";
+import { NoticeItem, OpeningHourResponse } from "@/app/lib/definitions";
 import Link from "next/link";
 
+// TODO: Clean up and style the page
+
 const ReserveLandingPage = async () => {
-  const openingHours: OpeningHourItem[] = await fetchOpeningHours<
-    OpeningHourItem[]
+  const openingHours: OpeningHourResponse[] = await fetchOpeningHours<
+    OpeningHourResponse[]
   >();
   const notices: NoticeItem[] = await fetchNotices<NoticeItem[]>();
   const activeNotices: NoticeItem[] = notices.filter((notice) => notice.active);
