@@ -12,9 +12,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Invalid calendarId", { status: 400 });
   }
   // Proxy to backend, keep query server-side only
-  return proxyJson(req, "GET", "/api/bookings", undefined, {
-    calendarId: idNum,
-  });
+  return proxyJson(req, "GET", `/api/calendar/${idNum}/bookings`);
 }
 
 /** POST /api/bookings  (JSON body) */
