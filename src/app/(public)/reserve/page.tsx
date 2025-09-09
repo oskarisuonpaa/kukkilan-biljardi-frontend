@@ -1,62 +1,85 @@
-import { fetchNotices, fetchOpeningHours } from "@/app/lib/api";
-import { NoticeItem, OpeningHourResponse } from "@/app/lib/definitions";
 import Link from "next/link";
+import SectionWrapper from "@/components/SectionWrapper";
+import { fetchNotices, fetchOpeningHours } from "@/app/lib/api";
+import type { NoticeItem, OpeningHourResponse } from "@/app/lib/definitions";
 
-// TODO: Clean up and style the page
+/** Optional ISR; adjust as needed */
+// export const revalidate = 60;
 
-const ReserveLandingPage = async () => {
-  const openingHours: OpeningHourResponse[] = await fetchOpeningHours<
-    OpeningHourResponse[]
-  >();
-  const notices: NoticeItem[] = await fetchNotices<NoticeItem[]>();
-  const activeNotices: NoticeItem[] = notices.filter((notice) => notice.active);
+/** Weekday labels for 1–7 (ISO: Monday=1 … Sunday=7). */
+const WEEKDAYS_FI: Record<number, string> = {
+  1: "Maanantai",
+  2: "Tiistai",
+  3: "Keskiviikko",
+  4: "Torstai",
+  5: "Perjantai",
+  6: "Lauantai",
+  7: "Sunnuntai",
+};
 
-  const weekdays: Record<number, string> = {
-    1: "Ma",
-    2: "Ti",
-    3: "Ke",
-    4: "To",
-    5: "Pe",
-    6: "La",
-    7: "Su",
-  };
+/** Returns "HH:MM" from common backend time formats like "HH:MM" or "HH:MM:SS". */
+function formatHourLabel(time: string | null | undefined): string {
+  if (!time) return "—";
+  // Keep minutes if present; otherwise show hours only.
+  // Safely handles "HH", "HH:MM", or "HH:MM:SS".
+  const parts = time.split(":");
+  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`;
+  return parts[0] ?? "—";
+}
+
+/** Returns a human-readable range like "12:00–18:00". */
+function formatHourRange(
+  opensAt: string | null | undefined,
+  closesAt: string | null | undefined
+): string {
+  return `${formatHourLabel(opensAt)}–${formatHourLabel(closesAt)}`;
+}
+
+/** Sort opening hours by weekday (1–7) to ensure stable display order. */
+function sortByWeekday(a: OpeningHourResponse, b: OpeningHourResponse): number {
+  return a.weekday - b.weekday;
+}
+
+async function ReserveLandingPage() {
+  const openingHours = await fetchOpeningHours<OpeningHourResponse[]>();
+  const notices = await fetchNotices<NoticeItem[]>();
+
+  const activeNotices = notices.filter((n) => n.active);
+  const sortedOpeningHours = [...openingHours].sort(sortByWeekday);
 
   return (
-    <main>
-      {/* Booking Link */}
-      <section>
-        <header>
-          <h2>Book a Table</h2>
-          <div className="section-undeline" />
-        </header>
-        <p className="text-[var(--text-secondary)]">
-          Click the button below to make a reservation.
-        </p>
-        <p className="mb-4 font-extralight text-sm text-[var(--text-secondary)]">
-          *By making a reservation, you agree to our{" "}
+    <main id="main" aria-labelledby="reserve-title" className="space-y-8">
+      {/* Reservation call-to-action */}
+      <SectionWrapper title="Varaa pöytä" id="reserve-title">
+        <p className="text-muted">Tee varaus painamalla alla olevaa nappia.</p>
+
+        <p className="mb-4 text-sm text-muted">
+          Tekemällä varauksen hyväksyt{" "}
           <Link
-            className="text-[var(--secondary)] hover:text-[var(--secondary-hover)] underline"
+            className="underline text-[var(--secondary)] hover:text-[var(--secondary-hover)]"
             href="/privacy"
           >
-            privacy policy
+            tietosuojakäytäntömme
           </Link>
           .
         </p>
-        <Link href="/reserve/tables" className="big-primary">
-          Reserve Now
-        </Link>
-      </section>
 
-      {/* Noticeboard */}
+        <Link href="/reserve/tables" className="big-primary">
+          Varaa nyt
+        </Link>
+      </SectionWrapper>
+
+      {/* Notice board */}
       {activeNotices.length > 0 && (
-        <section>
-          <header>
-            <h2>Noticeboard</h2>
-            <div className="section-undeline" />
-          </header>
-          <ul className="mt-4 space-y-6 text-[var(--text-secondary)]">
-            {activeNotices.map((notice, id) => (
-              <li key={id}>
+        <SectionWrapper title="Ilmoitustaulu">
+          <ul className="space-y-6 text-muted">
+            {activeNotices.map((notice) => (
+              <li
+                key={
+                  (notice as any).id ??
+                  `${notice.title}-${notice.content.slice(0, 16)}`
+                }
+              >
                 <h3 className="font-semibold text-[var(--text-main)]">
                   {notice.title}
                 </h3>
@@ -64,31 +87,25 @@ const ReserveLandingPage = async () => {
               </li>
             ))}
           </ul>
-        </section>
+        </SectionWrapper>
       )}
 
-      {/* Info */}
-      <section>
-        <header>
-          <h2>Information</h2>
-          <div className="section-undeline" />
-        </header>
-        <p className="underline font-semibold mb-4 text-[var(--secondary)]">
-          Snooker-kahvila auki sopimuksen ja varauksien mukaan!
-        </p>
+      {/* Booking info */}
+      <SectionWrapper title="Tietoa">
         <p className="mb-2 font-semibold text-[var(--text-main)]">
-          Voit varata Snookerpöydän seuraavina ajankohtina:
+          Voit varata snookerpöydän seuraavina aikoina:
         </p>
-        <ul className="list-disc list-inside text-[var(--text-secondary)]">
-          {openingHours.map(({ weekday, opens_at, closes_at }) => (
+
+        <ul className="list-inside list-disc text-muted">
+          {sortedOpeningHours.map(({ weekday, opens_at, closes_at }) => (
             <li key={weekday}>
-              {weekdays[weekday]} {opens_at.slice(0, 2)}-{closes_at.slice(0, 2)}
+              {WEEKDAYS_FI[weekday]} {formatHourRange(opens_at, closes_at)}
             </li>
           ))}
         </ul>
-      </section>
+      </SectionWrapper>
     </main>
   );
-};
+}
 
 export default ReserveLandingPage;
