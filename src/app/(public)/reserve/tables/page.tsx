@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchCalendars } from "@/app/lib/api";
+import { CalendarItem } from "@/app/lib/definitions";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,72 +13,71 @@ type Table = {
 
 type TableCardProps = {
   id: number;
-  tableName: string;
-  availableSlots?: number;
+  name: string;
+  availableSlots: number;
 };
 
-/* Mock data */
-const mockData: Table[] = [
-  { id: 1, name: "Kaisa", active: true },
-  { id: 2, name: "Snooker 1", active: true },
-  { id: 3, name: "Snooker 2", active: true },
-  { id: 4, name: "Pool", active: true },
-];
-
-/* Card */
-const TableCard = ({ id, tableName, availableSlots = 5 }: TableCardProps) => {
+/** Card representing a single table with availability and booking link. */
+function TableCard({ id, name, availableSlots }: TableCardProps) {
   return (
-    <div className="rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] p-5 shadow-sm">
-      <h2 className="mb-2 text-center text-lg font-semibold text-[var(--text-main)]">
-        {tableName}
+    <article className="card p-5 flex flex-col items-center text-center">
+      <h2 className="mb-2 text-lg font-semibold text-[var(--text-main)]">
+        {name}
       </h2>
 
-      {/* availability chip */}
-      <p className="mb-5 text-center">
-        <span className="inline-block rounded-full bg-[var(--neutral-soft)] px-3 py-1 text-sm font-medium text-[var(--bg-secondary)]">
+      <p className="mb-5">
+        <span className="availability-chip">
           Tänään {availableSlots} vapaata aikaa
         </span>
       </p>
 
       <Link
         href={`/reserve/tables/${id}`}
-        className="block rounded-lg border border-transparent bg-[var(--primary)] px-4 py-2 text-center font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--primary-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-subtle)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)]"
+        aria-label={`Varaa pöytä ${name}`}
+        className="button button-primary"
       >
         Varaa
       </Link>
-    </div>
+    </article>
   );
-};
+}
 
-/* Page */
-const ReserveTablePage = () => {
+/** Reservation tables overview page. */
+function ReserveTablePage() {
   const [tables, setTables] = useState<Table[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      // replace with real fetch later
-      setTables(mockData);
-    };
-    fetchData();
+    // Replace with real API call later.
+    async function fetchTables() {
+      const tables = await fetchCalendars<CalendarItem[]>();
+      setTables(tables);
+    }
+    fetchTables();
   }, []);
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <main id="main" className="mx-auto max-w-5xl px-6 py-10">
+      <section
+        aria-labelledby="reserve-tables-title"
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <h1 id="reserve-tables-title" className="sr-only">
+          Varaa pöytä
+        </h1>
+
         {tables
           .filter((t) => t.active)
-          .map((table) => (
+          .map((t) => (
             <TableCard
-              key={table.id}
-              id={table.id}
-              tableName={table.name}
-              /* you can compute per-table availability here */
-              availableSlots={5}
+              key={t.id}
+              id={t.id}
+              name={t.name}
+              availableSlots={5} // TODO: fetch per-table availability
             />
           ))}
       </section>
     </main>
   );
-};
+}
 
 export default ReserveTablePage;
