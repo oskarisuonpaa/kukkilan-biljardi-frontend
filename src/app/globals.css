@@ -252,6 +252,86 @@
   .muted {
     color: var(--text-muted);
   }
+
+  .site-header {
+    @apply sticky top-0 z-50 border-b;
+    background-color: var(--bg-secondary);
+    border-color: color-mix(in oklab, var(--border) 60%, transparent);
+  }
+
+  .site-header__inner {
+    @apply mx-auto flex max-w-6xl items-center justify-between px-6 py-4;
+  }
+
+  .site-brand {
+    @apply text-xl font-bold leading-none;
+    color: var(--text-main);
+  }
+
+  .site-brand__link {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    --tw-ring-color: var(--ring-color);
+    --tw-ring-offset-color: var(--bg-secondary);
+  }
+
+  .primary-nav {
+    @apply flex items-center;
+  }
+  .primary-nav__list {
+    @apply flex items-center gap-2;
+  }
+  .primary-nav__item {
+    /* no special rules yet; reserved for future */
+  }
+
+  /* Accessible skip link that appears only when focused */
+  .skip-link {
+    @apply sr-only focus:not-sr-only absolute left-4 top-2 rounded-md px-3 py-2 text-sm;
+    background-color: var(--primary);
+    color: var(--text-main);
+  }
+
+  /* -----------------------------------------
+     Navigation link (used by <NavigationLink/>)
+     ----------------------------------------- */
+  .nav-link {
+    @apply relative rounded-md px-2 py-1 transition-colors outline-none;
+
+    /* Base text color and hover treatment */
+    color: var(--text-muted);
+  }
+  .nav-link:hover {
+    color: var(--text-main);
+  }
+
+  /* Underline rail */
+  .nav-link::after {
+    content: "";
+    @apply absolute left-0 right-0 -bottom-1 h-[2px] transition-transform;
+    transform: scaleX(0);
+    background-color: var(--secondary-subtle);
+  }
+
+  /* Focus ring */
+  .nav-link:focus-visible {
+    @apply ring-2 ring-offset-2;
+    --tw-ring-color: var(--ring-color);
+    --tw-ring-offset-color: var(--bg-secondary);
+  }
+
+  /* Hover shows the underline animation */
+  .nav-link:hover::after {
+    transform: scaleX(1);
+  }
+
+  /* Active state driven by data attribute */
+  .nav-link[data-active="true"] {
+    color: var(--text-main);
+  }
+  .nav-link[data-active="true"]::after {
+    transform: scaleX(1);
+    background-color: var(--secondary);
+  }
 }
 
 /* =========================================

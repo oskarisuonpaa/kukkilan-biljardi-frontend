@@ -2,16 +2,17 @@ import { fetchContactInfo } from "@/app/lib/api";
 import { ContactInfoItem } from "@/app/lib/definitions";
 import Link from "next/link";
 
+// TODO: Clean
+
 const Footer = async () => {
   const contactInfo = await fetchContactInfo<ContactInfoItem>();
 
   return (
     <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border)]/60 px-6 py-10 text-[var(--text-secondary)]">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
-        {/* Quick Links */}
         <div>
           <h3 className="mb-4 text-lg font-semibold text-[var(--text-main)]">
-            Quick Links
+            Pikalinkit
           </h3>
           <ul>
             <li>
@@ -19,7 +20,7 @@ const Footer = async () => {
                 href="/"
                 className="hover:text-[var(--secondary)] transition-colors"
               >
-                Home
+                Aloitus
               </Link>
             </li>
             <li>
@@ -27,7 +28,7 @@ const Footer = async () => {
                 href="/reserve"
                 className="hover:text-[var(--secondary)] transition-colors"
               >
-                Make Reservation
+                Tee varaus
               </a>
             </li>
             <li>
@@ -35,7 +36,7 @@ const Footer = async () => {
                 href="/privacy"
                 className="hover:text-[var(--secondary)] transition-colors"
               >
-                Privacy Policy
+                Tietosuojakäytäntö
               </a>
             </li>
           </ul>
@@ -44,7 +45,7 @@ const Footer = async () => {
         {/* Social Links */}
         <div>
           <h3 className="mb-4 text-lg font-semibold text-[var(--text-main)]">
-            Follow us on social media
+            Seuraa meitä somessa
           </h3>
           <ul className="space-y-2">
             <li>
@@ -69,12 +70,12 @@ const Footer = async () => {
         {/* Contact Info */}
         <div>
           <h3 className="mb-4 text-lg font-semibold text-[var(--text-main)]">
-            Contact Information
+            Yhteystiedot
           </h3>
           <ul className="space-y-2">
-            <li>Address: {contactInfo.address}</li>
-            <li>Phone: {contactInfo.phone}</li>
-            <li>Email: {contactInfo.email}</li>
+            <li>Osoite: {contactInfo.address}</li>
+            <li>Puhelin: {contactInfo.phone}</li>
+            <li>Sähköposti: {contactInfo.email}</li>
           </ul>
         </div>
       </div>
