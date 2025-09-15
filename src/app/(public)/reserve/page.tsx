@@ -1,5 +1,3 @@
-import Link from "next/link";
-import SectionWrapper from "@/components/SectionWrapper";
 import { fetchNotices, fetchOpeningHours } from "@/app/lib/api";
 import type { NoticeItem, OpeningHourResponse } from "@/app/lib/definitions";
 import ReservationCTASection from "./components/ReservationCTASection";
